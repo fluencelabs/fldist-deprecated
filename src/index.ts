@@ -23,23 +23,26 @@ type Config = {
 };
 
 type ModuleName = 'curl' | 'sqlite' | 'history' | 'userlist' | 'url_downloader' | 'local_storage';
+type BlueprintName = ModuleName | 'chat';
 type Module = { name: ModuleName, base64: string };
 type Blueprint = {
 	uuid: string,
-	name: string,
+	name: BlueprintName,
 	dependencies: ModuleName[],
 };
 
 class Distributor {
-	blueprints: Blueprint[] = [];
+	blueprints: Blueprint[];
+	nodes: Node[];
 	modules: Module[];
 
 	// If innerClient is set, it will be used for all requests. Otherwise, a new client will be generated on each request.
 	innerClient?: FluenceClient;
 
-	constructor(optionalClient?: FluenceClient) {
+	constructor(nodes: Node[], optionalClient?: FluenceClient) {
 		Fluence.setLogLevel('trace');
 
+		this.nodes = nodes;
 		this.innerClient = optionalClient;
 
 		this.blueprints = [
@@ -49,7 +52,7 @@ class Distributor {
 				dependencies: ['sqlite']
 			},
 			{
-				name: 'user_list',
+				name: 'userlist',
 				uuid: '1cc9f08d-eaf2-4d27-a273-a52cb294a055',
 				dependencies: ['sqlite', 'userlist']
 			},
@@ -120,7 +123,48 @@ class Distributor {
 
 	async uploadAllModules(node: Node) {
 		for (const module of this.modules) {
-			this.uploadModule(node, module)
+			await this.uploadModule(node, module);
+		}
+	}
+
+	async uploadAllModulesToAllNodes() {
+		for (const node of this.nodes) {
+			await this.uploadAllModules(node);
+		}
+	}
+
+	async uploadAllBlueprints(node: Node) {
+		for (const bp of this.blueprints) {
+			await this.uploadBlueprint(node, bp);
+		}
+	}
+
+	async uploadAllBlueprintsToAllNodes() {
+		for (const node of this.nodes) {
+			await this.uploadAllBlueprints(node);
+		}
+	}
+
+	async distributeServices(relay: Node, distribution: Map<BlueprintName, number[]>) {
+		this.innerClient = await this.makeClient(relay);
+
+		for (const [name, nodes] of distribution.entries()) {
+			const blueprint = this.blueprints.find(bp => bp.name === name);
+			if (!blueprint) {
+				continue;
+			}
+
+			const modules = blueprint.dependencies.map((moduleName) => this.modules.find(m => m.name === moduleName));
+
+			for (const idx of nodes) {
+				const node = this.nodes[idx];
+				for (const module of modules) {
+					if (module) {
+						await this.uploadModule(node, module);
+					}
+				}
+				await this.uploadBlueprint(node, blueprint)
+			}
 		}
 	}
 }
@@ -141,56 +185,14 @@ function config(name: string): Config {
 	};
 }
 
-// export async function uploadModule(client: FluenceClient, name: string, base64: string) {
-// 	Fluence.setLogLevel('trace');
-//
-// 	const node = stage[0];
-// 	const client = await Fluence.connect(node.multiaddr);
-// 	console.log(`client peer id is ${client.selfPeerId.toB58String()}`);
-// 	const cfg = config(name);
-// 	await client.addModule(name, base64, cfg, node.peerId, 20000);
-//
-// 	const modules = await client.getAvailableModules(node.peerId, 20000);
-// 	console.log(`modules: ${JSON.stringify(modules)}`);
-
-	// const historyName = 'history'
-	// const userListName = 'user-list'
-	//
-	// await cl.addModule('curl', curl, peerId, 20000, c1);
-	// const c2 = {
-	// 	name: 'local_storage',
-	// 	mem_pages_count: 100,
-	// 	logger_enabled: true,
-	// 	wasi: {
-	// 		preopened_files: ['/sites'],
-	// 		mapped_dirs: {sites: '/sites'},
-	// 	}
-	// }
-	//
-	// await cl.addModule('local_storage', local_storage, peerId, 20000, c2);
-	// const c5 = {
-	// 	name: 'facade_url_downloader',
-	// 	mem_pages_count: 100,
-	// 	logger_enabled: true
-	// }
-	// await cl.addModule('facade_url_downloader', facade, peerId, 20000);
-	// console.log('5555')
-	// const blueprintId = await cl.addBlueprint('Url-Downloader', ['local_storage', 'curl', 'facade_url_downloader'], URL_DOWNLOADER)
-	// // let blueprintIdUserList = await cl.addBlueprint("UserList", ["sqlite3", userListName], USER_LIST_ID)
-	// // let blueprintIdSQLite = await cl.addBlueprint("SQLite", ["sqlite3"], SQLITE_ID)
-	// console.log(`BLUEPRINT ID: ${blueprintId}`)
-	// console.log('66666')
-	// // console.log(`BLUEPRINT USER LIST ID: ${blueprintIdUserList}`)
-	// // console.log(`BLUEPRINT HISTORY ID: ${blueprintIdSQLite}`)
-	//
-	// const serviceId = cl.createService(blueprintId, undefined, 20000);
-	// console.log('serviceId: ' + serviceId)
-	//
-	// // await create(cl, num, USER_LIST_ID, HISTORY_ID)
-// }
-
-const distributor = new Distributor();
-distributor.uploadAllModules(stage[0]);
+const distributor = new Distributor(stage);
+// distributor.uploadAllModulesToAllNodes();
+distributor.distributeServices(stage[0], new Map([
+	['sqlite', [1, 2, 3, 4]],
+	['userlist', [1, 2, 3, 4]],
+	['history', [1, 2, 3, 4]],
+	['url_downloader', [1, 2, 3, 4]]
+]));
 
 // uploadModule();
 
