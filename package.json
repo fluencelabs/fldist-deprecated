@@ -69,6 +69,7 @@
     }
   },
   "dependencies": {
-    "fluence": "^0.7.91"
+    "fluence": "^0.7.91",
+    "loglevel": "^1.7.1"
   }
 }
