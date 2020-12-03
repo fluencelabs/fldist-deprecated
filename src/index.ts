@@ -119,7 +119,7 @@ class Distributor {
 	}
 
 	async uploadAllModules(node: Node) {
-		for (const module in this.modules) {
+		for (const module of this.modules) {
 			this.uploadModule(node, module)
 		}
 	}
@@ -189,7 +189,7 @@ function config(name: string): Config {
 	// // await create(cl, num, USER_LIST_ID, HISTORY_ID)
 // }
 
-let distributor = new Distributor();
+const distributor = new Distributor();
 distributor.uploadAllModules(stage[0]);
 
 // uploadModule();
