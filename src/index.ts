@@ -8,7 +8,7 @@ import {SQLITE_BS64} from './artifacts/sqliteBs64';
 import {USER_LIST_BS64} from './artifacts/userListBs64';
 import {local_storage} from './artifacts/local_storage';
 import {facade as url_downloader_facade} from './artifacts/facade';
-import {Node, stage} from './environments';
+import {Node, stage, faasNetHttps} from './environments';
 import {FluenceClient} from 'fluence/dist/fluenceClient';
 import log from 'loglevel';
 
@@ -40,8 +40,6 @@ class Distributor {
 	innerClient?: FluenceClient;
 
 	constructor(nodes: Node[], optionalClient?: FluenceClient) {
-		Fluence.setLogLevel('trace');
-
 		this.nodes = nodes;
 		this.innerClient = optionalClient;
 
@@ -163,7 +161,8 @@ class Distributor {
 						await this.uploadModule(node, module);
 					}
 				}
-				await this.uploadBlueprint(node, blueprint)
+				const bp = await this.uploadBlueprint(node, blueprint);
+				await this.createService(node, bp);
 			}
 		}
 	}
@@ -185,14 +184,25 @@ function config(name: string): Config {
 	};
 }
 
-const distributor = new Distributor(stage);
+// @ts-ignore
+export async function distribute() {
+	Fluence.setLogLevel('warn');
+	const nodes = faasNetHttps;
+	const distributor = new Distributor(nodes);
 // distributor.uploadAllModulesToAllNodes();
-distributor.distributeServices(stage[0], new Map([
-	['sqlite', [1, 2, 3, 4]],
-	['userlist', [1, 2, 3, 4]],
-	['history', [1, 2, 3, 4]],
-	['url_downloader', [1, 2, 3, 4]]
-]));
+	await distributor.distributeServices(nodes[0], new Map([
+		['sqlite', [1, 2, 3, 4]],
+		['userlist', [1, 2, 3, 4]],
+		['history', [1, 2, 3, 4]],
+		['url_downloader', [1, 2, 3, 4]]
+	])).then(_ => console.log('finished'));
+}
 
-// uploadModule();
+// For use in browser
+interface MyNamespacedWindow extends Window {
+	distribute: (() => Promise<void>);
+}
+
+declare var window: MyNamespacedWindow;
+window.distribute = distribute;
 
