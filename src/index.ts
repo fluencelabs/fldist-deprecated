@@ -18,7 +18,7 @@ const TTL = 20000;
 
 type Config = {
 	logger_enabled: boolean;
-	module: { mounted_binaries: any };
+	module: { mounted_binaries: any | undefined };
 	wasi: { preopened_files: string[] };
 	name: string;
 	mem_pages_count: number
@@ -32,6 +32,20 @@ type Blueprint = {
 	name: BlueprintName,
 	dependencies: ModuleName[],
 };
+
+function config(name: string, mountedBinaries?: any): Config {
+	return {
+		name,
+		mem_pages_count: 100,
+		logger_enabled: true,
+		module: {
+			mounted_binaries: mountedBinaries
+		},
+		wasi: {
+			preopened_files: ['/tmp'],
+		}
+	};
+}
 
 class Distributor {
 	blueprints: Blueprint[];
@@ -196,22 +210,6 @@ class Distributor {
 	}
 }
 
-function config(name: string): Config {
-	return {
-		name,
-		mem_pages_count: 100,
-		logger_enabled: true,
-		module: {
-			mounted_binaries: {
-				curl: '/usr/bin/curl'
-			}
-		},
-		wasi: {
-			preopened_files: ['/tmp'],
-		}
-	};
-}
-
 // @ts-ignore
 export async function distribute() {
 	Fluence.setLogLevel('warn');
@@ -219,9 +217,9 @@ export async function distribute() {
 	const distributor = new Distributor(nodes);
 // distributor.uploadAllModulesToAllNodes();
 	await distributor.distributeServices(nodes[0], new Map([
-		['sqlite3', [1, 2, 3, 4]],
-		['userlist', [1, 2, 3, 4]],
-		['history', [1, 2, 3, 4]],
+		// ['sqlite3', [1, 2, 3, 4]],
+		// ['userlist', [1, 2, 3, 4]],
+		// ['history', [1, 2, 3, 4]],
 		['url_downloader', [1, 2, 3, 4]]
 	])).then(_ => console.log('finished'));
 }
