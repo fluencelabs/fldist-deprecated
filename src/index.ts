@@ -11,6 +11,7 @@ import {facade as url_downloader_facade} from './artifacts/facade';
 import {Node, stage, faasNetHttps} from './environments';
 import {FluenceClient} from 'fluence/dist/fluenceClient';
 import log from 'loglevel';
+import promiseRetry from 'promise-retry';
 
 const TTL = 20000;
 
@@ -87,7 +88,7 @@ class Distributor {
 
 	async uploadModule(node: Node, module: Module) {
 		const client = await this.makeClient(node);
-		log.info(`uploading module ${module.name} via client ${client.selfPeerId.toB58String()}`);
+		log.info(`uploading module ${module.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
 
 		const cfg = config(module.name);
 		await client.addModule(module.name, module.base64, cfg, node.peerId, TTL);
@@ -98,7 +99,7 @@ class Distributor {
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
 		const client = await this.makeClient(node);
-		log.info(`uploading blueprint ${bp.name} via client ${client.selfPeerId.toB58String()}`);
+		log.info(`uploading blueprint ${bp.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
 
 		const blueprintId = await client.addBlueprint(bp.name, bp.dependencies, bp.uuid, node.peerId, TTL);
 		if (blueprintId !== bp.uuid) {
@@ -146,6 +147,27 @@ class Distributor {
 	async distributeServices(relay: Node, distribution: Map<BlueprintName, number[]>) {
 		this.innerClient = await this.makeClient(relay);
 
+		// Cache information about uploaded modules & blueprints to avoid uploading them several times
+		const uploadedModules = new Set<[Node, ModuleName]>();
+		const uploadedBlueprints = new Set<[Node, BlueprintName]>();
+		async function uploadM(d: Distributor, node: Node, module: Module) {
+			const already = uploadedModules.has([node, module.name]);
+			if (!already) {
+				await promiseRetry({retries: 3}, () => d.uploadModule(node, module));
+			}
+			uploadedModules.add([node, module.name]);
+		}
+		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
+			const already = uploadedBlueprints.has([node, bp.name]);
+			if (!already) {
+				const blueprint = await promiseRetry({retries: 3}, () => d.uploadBlueprint(node, bp));
+				uploadedBlueprints.add([node, bp.name]);
+				return blueprint;
+			}
+
+			return bp;
+		}
+
 		for (const [name, nodes] of distribution.entries()) {
 			const blueprint = this.blueprints.find(bp => bp.name === name);
 			if (!blueprint) {
@@ -158,10 +180,10 @@ class Distributor {
 				const node = this.nodes[idx];
 				for (const module of modules) {
 					if (module) {
-						await this.uploadModule(node, module);
+						await uploadM(this, node, module);
 					}
 				}
-				const bp = await this.uploadBlueprint(node, blueprint);
+				const bp = await uploadB(this, node, blueprint);
 				await this.createService(node, bp);
 			}
 		}

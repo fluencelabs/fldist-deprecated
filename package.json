@@ -47,6 +47,7 @@
     "@types/chai": "^4.1.6",
     "@types/mocha": "^8.0.0",
     "@types/node": "^14.0.5",
+    "@types/promise-retry": "^1.1.3",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "chai": "^4.1.2",
@@ -70,6 +71,7 @@
   },
   "dependencies": {
     "fluence": "^0.7.91",
-    "loglevel": "^1.7.1"
+    "loglevel": "^1.7.1",
+    "promise-retry": "^2.0.1"
   }
 }
