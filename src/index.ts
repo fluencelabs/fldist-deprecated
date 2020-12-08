@@ -25,7 +25,7 @@ type Config = {
 };
 
 type ModuleName = 'curl' | 'sqlite3' | 'history' | 'userlist' | 'url_downloader' | 'local_storage';
-type BlueprintName = ModuleName | 'chat';
+type BlueprintName = 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
 type Module = { name: ModuleName, base64: string };
 type Blueprint = {
 	uuid: string,
@@ -61,22 +61,22 @@ class Distributor {
 
 		this.blueprints = [
 			{
-				name: 'sqlite3',
+				name: 'SQLite 3',
 				uuid: '623c6d14-2204-43c4-84d5-a237bcd19874',
 				dependencies: ['sqlite3']
 			},
 			{
-				name: 'userlist',
+				name: 'User List',
 				uuid: '1cc9f08d-eaf2-4d27-a273-a52cb294a055',
 				dependencies: ['sqlite3', 'userlist']
 			},
 			{
-				name: 'history',
+				name: 'Message History',
 				uuid: 'bbe13303-48c9-407f-ac74-88f26dc4bfa7',
 				dependencies: ['sqlite3', 'history']
 			},
 			{
-				name: 'url_downloader',
+				name: 'URL Downloader',
 				uuid: 'f247e046-7d09-497d-8330-9a41d6c23756',
 				dependencies: ['local_storage', 'curl', 'url_downloader']
 			},
@@ -217,9 +217,9 @@ export async function distribute() {
 	const distributor = new Distributor(nodes);
 // distributor.uploadAllModulesToAllNodes();
 	await distributor.distributeServices(nodes[0], new Map([
-		['sqlite3', [1, 2, 3, 4]],
-		['userlist', [1, 2, 3, 4]],
-		['history', [1, 2, 3, 4]],
+		['SQLite 3', [1, 2, 3, 4]],
+		['User List', [1, 2, 3, 4]],
+		['Message History', [1, 2, 3, 4]],
 		// ['url_downloader', [1, 2, 3, 4]]
 	])).then(_ => console.log('finished'));
 }
