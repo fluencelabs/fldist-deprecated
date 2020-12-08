@@ -9,7 +9,7 @@ import {USER_LIST_BS64} from './artifacts/userListBs64';
 import {local_storage} from './artifacts/local_storage';
 import {HISTORY_BS64} from './artifacts/historyBs64';
 import {facade as url_downloader_facade} from './artifacts/facade';
-import {Node, stage, faasNetHttps} from './environments';
+import {faasNetHttps, Node} from './environments';
 import {FluenceClient} from 'fluence/dist/fluenceClient';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
@@ -217,10 +217,10 @@ export async function distribute() {
 	const distributor = new Distributor(nodes);
 // distributor.uploadAllModulesToAllNodes();
 	await distributor.distributeServices(nodes[0], new Map([
-		// ['sqlite3', [1, 2, 3, 4]],
-		// ['userlist', [1, 2, 3, 4]],
-		// ['history', [1, 2, 3, 4]],
-		['url_downloader', [1, 2, 3, 4]]
+		['sqlite3', [1, 2, 3, 4]],
+		['userlist', [1, 2, 3, 4]],
+		['history', [1, 2, 3, 4]],
+		// ['url_downloader', [1, 2, 3, 4]]
 	])).then(_ => console.log('finished'));
 }
 
