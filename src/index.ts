@@ -19,7 +19,7 @@ const TTL = 20000;
 type ModuleConfig = {
 	name: ModuleName;
 	logger_enabled: boolean;
-	module: { mounted_binaries: any | undefined };
+	mounted_binaries: any | undefined;
 	wasi: {
 		preopened_files: string[],
 		mapped_dirs: any | undefined
@@ -51,9 +51,7 @@ function config(args: ConfigArgs): ModuleConfig {
 		name: args.name,
 		mem_pages_count: 100,
 		logger_enabled: true,
-		module: {
-			mounted_binaries: args.mountedBinaries
-		},
+		mounted_binaries: args.mountedBinaries,
 		wasi: {
 			preopened_files: args.preopenedFiles || [],
 			mapped_dirs: args.mappedDirs,
@@ -103,7 +101,7 @@ class Distributor {
 			},
 			{
 				base64: local_storage,
-				config: config({name: 'local_storage', preopenedFiles: ['./sites'], mappedDirs: {sites: './sites'}})
+				config: config({name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: {sites: '/tmp'}})
 			},
 			{base64: SQLITE_BS64, config: config({name: 'sqlite3'})},
 			{base64: url_downloader_facade, config: config({name: 'facade_url_downloader'})},
@@ -232,25 +230,27 @@ class Distributor {
 	}
 }
 
+// For use in browser
+interface MyNamespacedWindow extends Window {
+	nodes: Node[]
+	distributor: Distributor
+	distribute: (() => Promise<void>);
+}
+
+declare var window: MyNamespacedWindow;
+window.nodes = faasNetHttps;
+window.distribute = distribute;
+window.distributor = new Distributor(window.nodes);
+
 // @ts-ignore
 export async function distribute() {
 	Fluence.setLogLevel('warn');
-	const nodes = faasNetHttps;
-	const distributor = new Distributor(nodes);
+	const nodes = window.nodes;
 // distributor.uploadAllModulesToAllNodes();
-	await distributor.distributeServices(nodes[0], new Map([
+	await window.distributor.distributeServices(nodes[0], new Map([
 		// ['SQLite 3', [1, 2, 3, 4]],
 		// ['User List', [1, 2, 3, 4]],
 		// ['Message History', [1, 2, 3, 4]],
 		['URL Downloader', [1]]
 	])).then(_ => console.log('finished'));
 }
-
-// For use in browser
-interface MyNamespacedWindow extends Window {
-	distribute: (() => Promise<void>);
-}
-
-declare var window: MyNamespacedWindow;
-window.distribute = distribute;
-
