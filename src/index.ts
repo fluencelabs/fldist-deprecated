@@ -16,33 +16,47 @@ import promiseRetry from 'promise-retry';
 
 const TTL = 20000;
 
-type Config = {
+type ModuleConfig = {
+	name: ModuleName;
 	logger_enabled: boolean;
 	module: { mounted_binaries: any | undefined };
-	wasi: { preopened_files: string[] };
-	name: string;
+	wasi: {
+		preopened_files: string[],
+		mapped_dirs: any | undefined
+	};
 	mem_pages_count: number
 };
 
-type ModuleName = 'curl' | 'sqlite3' | 'history' | 'userlist' | 'url_downloader' | 'local_storage';
+type ModuleName = 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
 type BlueprintName = 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
-type Module = { name: ModuleName, base64: string };
+type Module = {
+	base64: string,
+	config: ModuleConfig
+};
 type Blueprint = {
 	uuid: string,
 	name: BlueprintName,
 	dependencies: ModuleName[],
 };
 
-function config(name: string, mountedBinaries?: any): Config {
+type ConfigArgs = {
+	name: ModuleName,
+	mountedBinaries?: any,
+	preopenedFiles?: string[],
+	mappedDirs?: any
+}
+
+function config(args: ConfigArgs): ModuleConfig {
 	return {
-		name,
+		name: args.name,
 		mem_pages_count: 100,
 		logger_enabled: true,
 		module: {
-			mounted_binaries: mountedBinaries
+			mounted_binaries: args.mountedBinaries
 		},
 		wasi: {
-			preopened_files: ['/tmp'],
+			preopened_files: args.preopenedFiles || [],
+			mapped_dirs: args.mappedDirs,
 		}
 	};
 }
@@ -78,18 +92,23 @@ class Distributor {
 			{
 				name: 'URL Downloader',
 				uuid: 'f247e046-7d09-497d-8330-9a41d6c23756',
-				dependencies: ['local_storage', 'curl', 'url_downloader']
+				dependencies: ['local_storage', 'curl', 'facade_url_downloader']
 			},
 		];
 
 		this.modules = [
-			{name: 'curl', base64: curl},
-			{name: 'sqlite3', base64: SQLITE_BS64},
-			{name: 'userlist', base64: USER_LIST_BS64},
-			{name: 'url_downloader', base64: url_downloader_facade},
-			{name: 'local_storage', base64: local_storage},
-			{name: 'curl', base64: curl},
-			{name: 'history', base64: HISTORY_BS64},
+			{
+				base64: curl,
+				config: config({name: 'curl', mountedBinaries: {curl: '/usr/bin/curl'}, preopenedFiles: ['/tmp']})
+			},
+			{
+				base64: local_storage,
+				config: config({name: 'local_storage', preopenedFiles: ['./sites'], mappedDirs: {sites: './sites'}})
+			},
+			{base64: SQLITE_BS64, config: config({name: 'sqlite3'})},
+			{base64: url_downloader_facade, config: config({name: 'facade_url_downloader'})},
+			{base64: USER_LIST_BS64, config: config({name: 'userlist'})},
+			{base64: HISTORY_BS64, config: config({name: 'history'})},
 		];
 	}
 
@@ -103,10 +122,9 @@ class Distributor {
 
 	async uploadModule(node: Node, module: Module) {
 		const client = await this.makeClient(node);
-		log.info(`uploading module ${module.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
+		log.info(`uploading module ${module.config.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
 
-		const cfg = config(module.name);
-		await client.addModule(module.name, module.base64, cfg, node.peerId, TTL);
+		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
 
 		// const modules = await client.getAvailableModules(node.peerId, 20000);
 		// console.log(`modules: ${JSON.stringify(modules)}`);
@@ -167,11 +185,11 @@ class Distributor {
 		const uploadedBlueprints = new Set<[Node, BlueprintName]>();
 
 		async function uploadM(d: Distributor, node: Node, module: Module) {
-			const already = uploadedModules.has([node, module.name]);
+			const already = uploadedModules.has([node, module.config.name]);
 			if (!already) {
 				await promiseRetry({retries: 3}, () => d.uploadModule(node, module));
 			}
-			uploadedModules.add([node, module.name]);
+			uploadedModules.add([node, module.config.name]);
 		}
 
 		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
@@ -189,10 +207,14 @@ class Distributor {
 			const blueprint = this.blueprints.find(bp => bp.name === name);
 			if (!blueprint) {
 				throw new Error(`can't find blueprint ${name}`);
-				continue;
 			}
 
-			const modules: [ModuleName, Module|undefined][] = blueprint.dependencies.map((moduleName) => [moduleName, this.modules.find(m => m.name === moduleName)]);
+			const modules: [ModuleName, Module | undefined][] = blueprint.dependencies.map(
+				(moduleName) => [
+					moduleName,
+					this.modules.find(m => m.config.name === moduleName)
+				]
+			);
 
 			for (const idx of nodes) {
 				const node = this.nodes[idx];
@@ -217,10 +239,10 @@ export async function distribute() {
 	const distributor = new Distributor(nodes);
 // distributor.uploadAllModulesToAllNodes();
 	await distributor.distributeServices(nodes[0], new Map([
-		['SQLite 3', [1, 2, 3, 4]],
-		['User List', [1, 2, 3, 4]],
-		['Message History', [1, 2, 3, 4]],
-		// ['url_downloader', [1, 2, 3, 4]]
+		// ['SQLite 3', [1, 2, 3, 4]],
+		// ['User List', [1, 2, 3, 4]],
+		// ['Message History', [1, 2, 3, 4]],
+		['URL Downloader', [1]]
 	])).then(_ => console.log('finished'));
 }
 
