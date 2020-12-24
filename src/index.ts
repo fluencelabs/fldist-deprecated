@@ -1,19 +1,13 @@
 'use strict';
 
 import Fluence from 'fluence';
-// import {FluenceSender} from "./fluenceSender";
-// import {getPageType} from "./index";
-import {redis} from './artifacts/redis.bs64';
-import {curl} from './artifacts/curl';
-import {SQLITE_BS64} from './artifacts/sqliteBs64';
-import {USER_LIST_BS64} from './artifacts/userListBs64';
-import {local_storage} from './artifacts/local_storage';
-import {HISTORY_BS64} from './artifacts/historyBs64';
-import {facade as url_downloader_facade} from './artifacts/facade';
 import {faasDev, Node} from './environments';
 import {FluenceClient} from 'fluence/dist/fluenceClient';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
+
+// NodeJS imports
+import {promises as fs} from 'fs';
 
 const TTL = 20000;
 
@@ -100,20 +94,27 @@ class Distributor {
 			}
 		];
 
+		this.modules = [];
+	}
+
+	async load_modules() {
 		this.modules = [
 			{
-				base64: curl,
+				base64: await loadWasmModule('url-downloader/curl.wasm'),
 				config: config({name: 'curl', mountedBinaries: {curl: '/usr/bin/curl'}, preopenedFiles: ['/tmp']})
 			},
 			{
-				base64: local_storage,
+				base64: await loadWasmModule('url-downloader/local_storage.wasm'),
 				config: config({name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: {sites: '/tmp'}})
 			},
-			{base64: SQLITE_BS64, config: config({name: 'sqlite3'})},
-			{base64: url_downloader_facade, config: config({name: 'facade_url_downloader'})},
-			{base64: USER_LIST_BS64, config: config({name: 'userlist'})},
-			{base64: HISTORY_BS64, config: config({name: 'history'})},
-			{base64: redis, config: config({name: 'redis'})},
+			{
+				base64: await loadWasmModule('url-downloader/facade.wasm'),
+				config: config({name: 'facade_url_downloader'})
+			},
+			{base64: await loadWasmModule('sqlite3.wasm'), config: config({name: 'sqlite3'})},
+			{base64: await loadWasmModule('user-list.wasm'), config: config({name: 'userlist'})},
+			{base64: await loadWasmModule('history.wasm'), config: config({name: 'history'})},
+			{base64: await loadWasmModule('redis.wasm'), config: config({name: 'redis'})},
 		];
 	}
 
@@ -127,7 +128,7 @@ class Distributor {
 
 	async uploadModule(node: Node, module: Module) {
 		const client = await this.makeClient(node);
-		log.info(`uploading module ${module.config.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
+		log.warn(`uploading module ${module.config.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
 
@@ -137,7 +138,7 @@ class Distributor {
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
 		const client = await this.makeClient(node);
-		log.info(`uploading blueprint ${bp.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
+		log.warn(`uploading blueprint ${bp.name} to node ${node.peerId} via client ${client.selfPeerId.toB58String()}`);
 
 		const blueprintId = await client.addBlueprint(bp.name, bp.dependencies, bp.uuid, node.peerId, TTL);
 		if (blueprintId !== bp.uuid) {
@@ -150,10 +151,10 @@ class Distributor {
 
 	async createService(node: Node, bp: Blueprint): Promise<string> {
 		const client = await this.makeClient(node);
-		log.info(`creating service ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
+		log.warn(`creating service ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
 
 		const serviceId = await client.createService(bp.uuid, node.peerId, TTL);
-		log.info(`service created ${serviceId} as instance of ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
+		log.warn(`service created ${serviceId} as instance of ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
 
 		return serviceId;
 	}
@@ -237,8 +238,6 @@ class Distributor {
 	}
 }
 
-log.setLevel('info');
-
 // For use in browser
 interface MyNamespacedWindow extends Window {
 	nodes: Node[]
@@ -251,13 +250,12 @@ try {
 	window.nodes = faasDev;
 	window.distribute = distribute;
 	window.distributor = new Distributor(window.nodes);
-} catch(e) {
+} catch (e) {
 	//
 }
 
 // @ts-ignore
 export async function distribute() {
-	Fluence.setLogLevel('warn');
 	const nodes = faasDev;
 	const distributor = new Distributor(nodes);
 	await distributor.distributeServices(nodes[0], new Map([
@@ -265,14 +263,33 @@ export async function distribute() {
 		['User List', [1, 1]],
 		['Message History', [1, 1, 1]],
 		// ['Redis', [5,6,7,8]]
-	])).then(_ => log.info('finished'));
+	])).then(_ => log.warn('finished'));
 }
 
-if(typeof process === 'object') {
+export async function loadWasmModule(name: string): Promise<string> {
+	const data = await fs.readFile('./src/artifacts/' + name);
+	const base64data = data.toString('base64');
+	return base64data;
+}
+
+if (typeof process === 'object') {
+	Fluence.setLogLevel('warn');
+	log.setLevel('warn');
+
+	console.log(`log level is ${log.getLevel()}`);
+
 	// we're running in Node.js
-	log.info('hello, node!');
+	log.warn('hello, node!');
 
 	((async () => {
-		await distribute();
+		const distributor = new Distributor(faasDev);
+		await distributor.load_modules();
+		await distributor.distributeServices(faasDev[0], new Map([
+			// ['SQLite 3', [1, 2, 3, 4]],
+			['User List', [1, 1]],
+			['Message History', [1, 1, 1]],
+			// ['Redis', [5,6,7,8]]
+		])).then(_ => log.warn('finished'));
+		// await log.warn(await loadWasmModule('history.wasm'));
 	})());
 }
