@@ -3,6 +3,7 @@
 import Fluence from 'fluence';
 // import {FluenceSender} from "./fluenceSender";
 // import {getPageType} from "./index";
+import {redis} from './artifacts/redis.bs64';
 import {curl} from './artifacts/curl';
 import {SQLITE_BS64} from './artifacts/sqliteBs64';
 import {USER_LIST_BS64} from './artifacts/userListBs64';
@@ -27,8 +28,8 @@ type ModuleConfig = {
 	mem_pages_count: number
 };
 
-type ModuleName = 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
-type BlueprintName = 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
+type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
+type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
 type Module = {
 	base64: string,
 	config: ModuleConfig
@@ -92,6 +93,11 @@ class Distributor {
 				uuid: 'f247e046-7d09-497d-8330-9a41d6c23756',
 				dependencies: ['local_storage', 'curl', 'facade_url_downloader']
 			},
+			{
+				name: 'Redis',
+				uuid: 'b3a22bb4-4ba9-4517-90b1-45cc97f7a610',
+				dependencies: ['redis'],
+			}
 		];
 
 		this.modules = [
@@ -107,6 +113,7 @@ class Distributor {
 			{base64: url_downloader_facade, config: config({name: 'facade_url_downloader'})},
 			{base64: USER_LIST_BS64, config: config({name: 'userlist'})},
 			{base64: HISTORY_BS64, config: config({name: 'history'})},
+			{base64: redis, config: config({name: 'redis'})},
 		];
 	}
 
@@ -249,8 +256,8 @@ export async function distribute() {
 // distributor.uploadAllModulesToAllNodes();
 	await window.distributor.distributeServices(nodes[0], new Map([
 		// ['SQLite 3', [1, 2, 3, 4]],
-		// ['User List', [1, 2, 3, 4]],
-		// ['Message History', [1, 2, 3, 4]],
-		['URL Downloader', [1]]
+		['User List', [6,7,10]],
+		['Message History', [6,7,10]],
+		['Redis', [5,6,7,8]]
 	])).then(_ => console.log('finished'));
 }
