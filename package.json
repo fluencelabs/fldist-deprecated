@@ -26,6 +26,7 @@
     "@babel/parser": "7.3.0"
   },
   "scripts": {
+    "cli": "tsc && node -r esm -r ts-node/register dist/index.js",
     "run": "npx --node-arg '-r esm' --node-arg '-r ts-node/register' parcel index.html",
     "build": "npm run clean && tsc",
     "changelog": "conventional-changelog -p angular -u",
@@ -70,7 +71,7 @@
     }
   },
   "dependencies": {
-    "fluence": "^0.7.91",
+    "fluence": "^0.7.108",
     "loglevel": "^1.7.1",
     "promise-retry": "^2.0.1"
   }

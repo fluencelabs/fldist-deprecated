@@ -10,7 +10,7 @@ import {USER_LIST_BS64} from './artifacts/userListBs64';
 import {local_storage} from './artifacts/local_storage';
 import {HISTORY_BS64} from './artifacts/historyBs64';
 import {facade as url_downloader_facade} from './artifacts/facade';
-import {faasNetHttps, Node} from './environments';
+import {faasDev, Node} from './environments';
 import {FluenceClient} from 'fluence/dist/fluenceClient';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
@@ -237,6 +237,8 @@ class Distributor {
 	}
 }
 
+log.setLevel('info');
+
 // For use in browser
 interface MyNamespacedWindow extends Window {
 	nodes: Node[]
@@ -245,19 +247,32 @@ interface MyNamespacedWindow extends Window {
 }
 
 declare var window: MyNamespacedWindow;
-window.nodes = faasNetHttps;
-window.distribute = distribute;
-window.distributor = new Distributor(window.nodes);
+try {
+	window.nodes = faasDev;
+	window.distribute = distribute;
+	window.distributor = new Distributor(window.nodes);
+} catch(e) {
+	//
+}
 
 // @ts-ignore
 export async function distribute() {
 	Fluence.setLogLevel('warn');
-	const nodes = window.nodes;
-// distributor.uploadAllModulesToAllNodes();
-	await window.distributor.distributeServices(nodes[0], new Map([
+	const nodes = faasDev;
+	const distributor = new Distributor(nodes);
+	await distributor.distributeServices(nodes[0], new Map([
 		// ['SQLite 3', [1, 2, 3, 4]],
-		['User List', [6,7,10]],
-		['Message History', [6,7,10]],
-		['Redis', [5,6,7,8]]
-	])).then(_ => console.log('finished'));
+		['User List', [1, 1]],
+		['Message History', [1, 1, 1]],
+		// ['Redis', [5,6,7,8]]
+	])).then(_ => log.info('finished'));
+}
+
+if(typeof process === 'object') {
+	// we're running in Node.js
+	log.info('hello, node!');
+
+	((async () => {
+		await distribute();
+	})());
 }
