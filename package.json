@@ -36,7 +36,7 @@
     "cover": "nyc npm run test",
     "cover:check": "nyc --check-coverage npm run test",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
-    "lint": "tslint src/**/*.ts src/test/**/*.ts",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "preversion": "npm run build && npm run cover:check",
     "postversion": "git push && git push --tags",
     "prepare": "npm run build",
@@ -47,22 +47,30 @@
   "devDependencies": {
     "@types/chai": "^4.1.6",
     "@types/mocha": "^8.0.0",
-    "@types/node": "^14.15.2",
+    "@types/node": "^14.14.16",
     "@types/promise-retry": "^1.1.3",
+    "@types/yargs": "^15.0.12",
+    "@typescript-eslint/eslint-plugin": "^4.11.0",
+    "@typescript-eslint/parser": "^4.11.0",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "chai": "^4.1.2",
     "conventional-changelog-cli": "^2.0.12",
     "coveralls": "^3.0.3",
     "cz-conventional-changelog": "^3.0.2",
+    "eslint": "^7.16.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-prettier": "^3.3.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
     "esm": "^3.2.25",
     "mocha": "^8.1.3",
     "nyc": "^15.0.0",
     "parcel": "^1.12.4",
     "parcel-bundler": "^1.12.4",
+    "prettier": "^2.2.1",
     "source-map-support": "^0.5.12",
     "ts-node": "^9.0.0",
-    "tslint": "^6.0.0",
     "typescript": "^4.1.2"
   },
   "config": {
@@ -73,6 +81,7 @@
   "dependencies": {
     "fluence": "^0.7.108",
     "loglevel": "^1.7.1",
-    "promise-retry": "^2.0.1"
+    "promise-retry": "^2.0.1",
+    "yargs": "^16.2.0"
   }
 }
