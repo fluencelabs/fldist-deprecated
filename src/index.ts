@@ -56,11 +56,13 @@ export async function loadWasmModule(name: string): Promise<string> {
     return base64data;
 }
 
-export async function uploadModule(name: string, path: string): Promise<void> {
-    Fluence.setLogLevel('silent')
-    let peerId = await Fluence.generatePeerId();
-    console.log(peerId.toB58String())
+export async function addBlueprint(name: string, id: string, deps: string[]): Promise<void> {
 
+    const distributor = new Distributor(faasDev);
+    await distributor.uploadBlueprint(faasDev[2], {name, uuid: id, dependencies: deps})
+}
+
+export async function uploadModule(name: string, path: string): Promise<void> {
     let module = await getCustomModule(name, path)
     const distributor = new Distributor(faasDev);
     await distributor.uploadModule(faasDev[2], module)
@@ -100,13 +102,13 @@ if (typeof process === 'object') {
         .command({
             command: 'uploadAll',
             describe: 'Upload all artifacts',
-            handler: async (argv) => {
+            handler: async (_) => {
                 await uploadAll()
             }
         })
         .command({
             command: 'upload',
-            describe: 'Upload selectedwasm',
+            describe: 'Upload selected wasm',
             builder: (yargs) => {
                 return yargs
                     .option('p', {
@@ -123,9 +125,36 @@ if (typeof process === 'object') {
 					})
             },
             handler: async (argv) => {
-                // console.log("asfef")
-                // console.log(argv)
-                await uploadModule(argv.name as string, argv.path as string)
+                return uploadModule(argv.name as string, argv.path as string)
+            }
+        })
+        .command({
+            command: 'add_blueprint',
+            describe: 'Add blueprint',
+            builder: (yargs) => {
+                return yargs
+                    .option('d', {
+                        alias: 'deps',
+                        demandOption: true,
+                        describe: 'Dependencies',
+                        type: 'array'
+                    })
+                    .option('n', {
+                        alias: 'name',
+                        demandOption: true,
+                        describe: 'a name of a blueprint',
+                        type: 'string'
+                    })
+                    .option('i', {
+                        alias: 'id',
+                        demandOption: true,
+                        describe: 'an id of a blueprint',
+                        type: 'string'
+                    })
+            },
+            handler: async (argv) => {
+                return addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+
             }
         })
         .argv;

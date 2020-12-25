@@ -6,7 +6,7 @@ import { Node } from './environments';
 import {loadCustomWasmModule, loadWasmModule, TTL} from './index';
 
 // type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
-type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
+// type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
 
 type ModuleConfig = {
 	name: string;
@@ -34,7 +34,7 @@ export async function getCustomModule(name: string, path: string): Promise<Modul
 
 type Blueprint = {
 	uuid: string;
-	name: BlueprintName;
+	name: string;
 	dependencies: string[];
 };
 
@@ -198,12 +198,12 @@ export class Distributor {
 		}
 	}
 
-	async distributeServices(relay: Node, distribution: Map<BlueprintName, number[]>) {
+	async distributeServices(relay: Node, distribution: Map<string, number[]>) {
 		// this.innerClient = await this.makeClient(relay);
 
 		// Cache information about uploaded modules & blueprints to avoid uploading them several times
 		const uploadedModules = new Set<[Node, string]>();
-		const uploadedBlueprints = new Set<[Node, BlueprintName]>();
+		const uploadedBlueprints = new Set<[Node, string]>();
 
 		async function uploadM(d: Distributor, node: Node, module: Module) {
 			const already = uploadedModules.has([node, module.config.name]);
