@@ -4,7 +4,12 @@ Can distribute modules, blueprints and create services.
 ## Running
 ```shell
 npm i
-npm run run
+npm run run 
+```
+
+From console you can call
+```shell
+npm run cli uploadAll
 ```
 
 In browser, open console, and call `await distribute()`;

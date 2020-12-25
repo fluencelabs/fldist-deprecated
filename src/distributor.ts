@@ -3,13 +3,13 @@ import Fluence from 'fluence';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
 import { Node } from './environments';
-import { loadWasmModule, TTL } from './index';
+import {loadCustomWasmModule, loadWasmModule, TTL} from './index';
 
-type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
+// type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
 type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
 
 type ModuleConfig = {
-	name: ModuleName;
+	name: string;
 	logger_enabled: boolean;
 	mounted_binaries: any | undefined;
 	wasi: {
@@ -23,14 +23,23 @@ type Module = {
 	base64: string;
 	config: ModuleConfig;
 };
+
+export async function getDefaultModule(name: string, path: string): Promise<Module> {
+	return { base64: await loadWasmModule(path), config: config({ name }) }
+}
+
+export async function getCustomModule(name: string, path: string): Promise<Module> {
+	return { base64: await loadCustomWasmModule(path), config: config({ name }) }
+}
+
 type Blueprint = {
 	uuid: string;
 	name: BlueprintName;
-	dependencies: ModuleName[];
+	dependencies: string[];
 };
 
 type ConfigArgs = {
-	name: ModuleName;
+	name: string;
 	mountedBinaries?: any;
 	preopenedFiles?: string[];
 	mappedDirs?: any;
@@ -193,7 +202,7 @@ export class Distributor {
 		// this.innerClient = await this.makeClient(relay);
 
 		// Cache information about uploaded modules & blueprints to avoid uploading them several times
-		const uploadedModules = new Set<[Node, ModuleName]>();
+		const uploadedModules = new Set<[Node, string]>();
 		const uploadedBlueprints = new Set<[Node, BlueprintName]>();
 
 		async function uploadM(d: Distributor, node: Node, module: Module) {
@@ -221,7 +230,7 @@ export class Distributor {
 				throw new Error(`can't find blueprint ${name}`);
 			}
 
-			const modules: [ModuleName, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
+			const modules: [string, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
 				moduleName,
 				this.modules.find((m) => m.config.name === moduleName),
 			]);
