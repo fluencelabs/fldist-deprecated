@@ -1,8 +1,8 @@
-import { FluenceClient } from 'fluence/dist/fluenceClient';
+import {FluenceClient} from 'fluence/dist/fluenceClient';
 import Fluence from 'fluence';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
-import { Node } from './environments';
+import {Node} from './environments';
 import {loadCustomWasmModule, loadWasmModule, TTL} from './index';
 
 // type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
@@ -160,18 +160,9 @@ export class Distributor {
 		return bp;
 	}
 
-	async createService(node: Node, bp: Blueprint): Promise<string> {
+	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
-		log.warn(`creating service ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
-
-		const serviceId = await client.createService(bp.uuid, node.peerId, TTL);
-		log.warn(
-			`service created ${serviceId} as instance of ${bp.name}@${
-				bp.uuid
-			} via client ${client.selfPeerId.toB58String()}`,
-		);
-
-		return serviceId;
+		return client.createService(bpId, node.peerId, TTL);
 	}
 
 	async uploadAllModules(node: Node) {
@@ -245,7 +236,13 @@ export class Distributor {
 					}
 				}
 				const bp = await uploadB(this, node, blueprint);
-				await this.createService(node, bp);
+				log.warn(`creating service ${bp.name}@${bp.uuid}`);
+				let serviceId = await this.createService(node, bp.uuid);
+				log.warn(
+					`service created ${serviceId} as instance of ${bp.name}@${
+						bp.uuid
+					}`
+				);
 			}
 		}
 	}

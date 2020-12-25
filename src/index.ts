@@ -58,13 +58,20 @@ export async function loadWasmModule(name: string): Promise<string> {
 
 export async function addBlueprint(name: string, id: string, deps: string[]): Promise<void> {
 
-    const distributor = new Distributor(faasDev);
+    const distributor = new Distributor([]);
     await distributor.uploadBlueprint(faasDev[2], {name, uuid: id, dependencies: deps})
+}
+
+export async function createService(id: string): Promise<void> {
+
+    const distributor = new Distributor([]);
+    let serviceId = await distributor.createService(faasDev[2], id)
+    log.warn("Service id: " + serviceId)
 }
 
 export async function uploadModule(name: string, path: string): Promise<void> {
     let module = await getCustomModule(name, path)
-    const distributor = new Distributor(faasDev);
+    const distributor = new Distributor([]);
     await distributor.uploadModule(faasDev[2], module)
 
     console.log(`Module uploaded!`);
@@ -154,6 +161,27 @@ if (typeof process === 'object') {
             },
             handler: async (argv) => {
                 return addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+
+            }
+        }
+        )
+        .command({
+            command: 'create_service',
+            describe: 'Create a service',
+            builder: (yargs) => {
+                return yargs
+                    .option('i', {
+                        alias: 'id',
+                        demandOption: true,
+                        describe: 'blueprint id',
+                        type: 'string'
+                    })
+
+            },
+            handler: async (argv) => {
+                Fluence.setLogLevel('warn');
+                log.setLevel('warn');
+                return createService(argv.id as string)
 
             }
         })
