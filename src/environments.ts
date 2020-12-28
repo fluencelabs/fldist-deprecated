@@ -25,10 +25,6 @@ export const stage: Node[] = [
 		multiaddr: '/dns4/stage.fluence.dev/tcp/19990/wss/p2p/12D3KooWMhVpgfQxBLkQkJed8VFNvgN4iE6MD7xCybb1ZYWW2Gtz',
 		peerId: '12D3KooWMhVpgfQxBLkQkJed8VFNvgN4iE6MD7xCybb1ZYWW2Gtz',
 	},
-	{
-		multiaddr: '/dns4/stage.fluence.dev/tcp/19100/wss/p2p/12D3KooWPnLxnY71JDxvB3zbjKu9k1BCYNthGZw6iGrLYsR1RnWM',
-		peerId: '12D3KooWPnLxnY71JDxvB3zbjKu9k1BCYNthGZw6iGrLYsR1RnWM',
-	},
 ];
 
 // { 'host': 'net01.fluence.dev', 'ports': [9001], 'addr':'165.227.164.206' },  12D3KooWEXNUbCXooUwHrHBbrmjsrpHXoEphPwbjQXEGyzbqKnE9
