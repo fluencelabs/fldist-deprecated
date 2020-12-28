@@ -31,10 +31,6 @@ export async function loadModule(path: string): Promise<string> {
 	return data.toString('base64');
 }
 
-export async function getDefaultModule(name: string, path: string): Promise<Module> {
-	return { base64: await loadModule(`./src/artifacts/${name}`), config: config({ name }) }
-}
-
 export async function getCustomModule(name: string, path: string): Promise<Module> {
 	return { base64: await loadModule(path), config: config({ name }) }
 }
