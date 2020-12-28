@@ -1,15 +1,17 @@
-import { FluenceClient } from 'fluence/dist/fluenceClient';
+import {FluenceClient} from 'fluence/dist/fluenceClient';
 import Fluence from 'fluence';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
-import { Node } from './environments';
-import { loadWasmModule, TTL } from './index';
+import {Node} from './environments';
+import {build, genUUID} from "fluence/dist/particle";
+import {registerService} from "fluence/dist/globalState";
+import {ServiceOne} from "fluence/dist/service";
+import {promises as fs} from "fs";
 
-type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
-type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
+export const TTL = 20000;
 
 type ModuleConfig = {
-	name: ModuleName;
+	name: string;
 	logger_enabled: boolean;
 	mounted_binaries: any | undefined;
 	wasi: {
@@ -23,14 +25,24 @@ type Module = {
 	base64: string;
 	config: ModuleConfig;
 };
+
+export async function loadModule(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString('base64');
+}
+
+export async function getModule(name: string, path: string): Promise<Module> {
+	return { base64: await loadModule(path), config: config({ name }) }
+}
+
 type Blueprint = {
 	uuid: string;
-	name: BlueprintName;
-	dependencies: ModuleName[];
+	name: string;
+	dependencies: string[];
 };
 
 type ConfigArgs = {
-	name: ModuleName;
+	name: string;
 	mountedBinaries?: any;
 	preopenedFiles?: string[];
 	mappedDirs?: any;
@@ -97,21 +109,21 @@ export class Distributor {
 	async load_modules() {
 		this.modules = [
 			{
-				base64: await loadWasmModule('url-downloader/curl.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
 				config: config({ name: 'curl', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
 			},
 			{
-				base64: await loadWasmModule('url-downloader/local_storage.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
 				config: config({ name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: { sites: '/tmp' } }),
 			},
 			{
-				base64: await loadWasmModule('url-downloader/facade.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
 				config: config({ name: 'facade_url_downloader' }),
 			},
-			{ base64: await loadWasmModule('sqlite3.wasm'), config: config({ name: 'sqlite3' }) },
-			{ base64: await loadWasmModule('user-list.wasm'), config: config({ name: 'userlist' }) },
-			{ base64: await loadWasmModule('history.wasm'), config: config({ name: 'history' }) },
-			{ base64: await loadWasmModule('redis.wasm'), config: config({ name: 'redis' }) },
+			{ base64: await loadModule('./src/artifacts/sqlite3.wasm'), config: config({ name: 'sqlite3' }) },
+			{ base64: await loadModule('./src/artifacts/user-list.wasm'), config: config({ name: 'userlist' }) },
+			{ base64: await loadModule('./src/artifacts/history.wasm'), config: config({ name: 'history' }) },
+			{ base64: await loadModule('./src/artifacts/redis.wasm'), config: config({ name: 'redis' }) },
 		];
 	}
 
@@ -132,8 +144,7 @@ export class Distributor {
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
 
-		// const modules = await client.getAvailableModules(node.peerId, 20000);
-		// console.log(`modules: ${JSON.stringify(modules)}`);
+		console.log(`Module uploaded!`);
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
@@ -151,18 +162,33 @@ export class Distributor {
 		return bp;
 	}
 
-	async createService(node: Node, bp: Blueprint): Promise<string> {
+	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
-		log.warn(`creating service ${bp.name}@${bp.uuid} via client ${client.selfPeerId.toB58String()}`);
+		let serviceId = client.createService(bpId, node.peerId, TTL);
+		log.warn("Service id: " + serviceId)
+		return serviceId
+	}
 
-		const serviceId = await client.createService(bp.uuid, node.peerId, TTL);
-		log.warn(
-			`service created ${serviceId} as instance of ${bp.name}@${
-				bp.uuid
-			} via client ${client.selfPeerId.toB58String()}`,
-		);
+	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
+		const client = await this.makeClient(node);
+		let returnService = genUUID()
 
-		return serviceId;
+		data.set("returnService", returnService);
+		data.set("relay", node.peerId);
+
+		let particle = await build(client.selfPeerId, air, data);
+		let service = new ServiceOne(returnService, (fnName, args, tetraplets) => {
+			console.log("===================")
+			console.log(fnName)
+			console.log(args)
+			console.log(tetraplets)
+			console.log("===================")
+			return {}
+		})
+		registerService(service)
+		let particleId = await client.sendParticle(particle)
+		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
+		return particleId
 	}
 
 	async uploadAllModules(node: Node) {
@@ -189,12 +215,12 @@ export class Distributor {
 		}
 	}
 
-	async distributeServices(relay: Node, distribution: Map<BlueprintName, number[]>) {
+	async distributeServices(relay: Node, distribution: Map<string, number[]>) {
 		// this.innerClient = await this.makeClient(relay);
 
 		// Cache information about uploaded modules & blueprints to avoid uploading them several times
-		const uploadedModules = new Set<[Node, ModuleName]>();
-		const uploadedBlueprints = new Set<[Node, BlueprintName]>();
+		const uploadedModules = new Set<[Node, string]>();
+		const uploadedBlueprints = new Set<[Node, string]>();
 
 		async function uploadM(d: Distributor, node: Node, module: Module) {
 			const already = uploadedModules.has([node, module.config.name]);
@@ -221,7 +247,7 @@ export class Distributor {
 				throw new Error(`can't find blueprint ${name}`);
 			}
 
-			const modules: [ModuleName, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
+			const modules: [string, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
 				moduleName,
 				this.modules.find((m) => m.config.name === moduleName),
 			]);
@@ -236,7 +262,13 @@ export class Distributor {
 					}
 				}
 				const bp = await uploadB(this, node, blueprint);
-				await this.createService(node, bp);
+				log.warn(`creating service ${bp.name}@${bp.uuid}`);
+				let serviceId = await this.createService(node, bp.uuid);
+				log.warn(
+					`service created ${serviceId} as instance of ${bp.name}@${
+						bp.uuid
+					}`
+				);
 			}
 		}
 	}
