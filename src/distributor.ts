@@ -31,7 +31,7 @@ export async function loadModule(path: string): Promise<string> {
 	return data.toString('base64');
 }
 
-export async function getCustomModule(name: string, path: string): Promise<Module> {
+export async function getModule(name: string, path: string): Promise<Module> {
 	return { base64: await loadModule(path), config: config({ name }) }
 }
 

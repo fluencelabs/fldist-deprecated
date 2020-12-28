@@ -4,7 +4,7 @@ import log from 'loglevel';
 // NodeJS imports
 import {promises as fs} from 'fs';
 import {faasDev, Node} from './environments';
-import {Distributor, getCustomModule} from './distributor';
+import {Distributor, getModule} from './distributor';
 import {args} from "./args";
 
 // For use in browser
@@ -61,7 +61,7 @@ export async function runAir(path: string, data: Map<string, any>): Promise<void
 }
 
 export async function uploadModule(name: string, path: string): Promise<void> {
-    let module = await getCustomModule(name, path)
+    let module = await getModule(name, path)
     const distributor = new Distributor([]);
     await distributor.uploadModule(faasDev[2], module)
 }
