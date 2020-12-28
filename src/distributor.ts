@@ -94,7 +94,7 @@ export class Distributor {
 			{
 				name: 'URL Downloader',
 				uuid: 'f247e046-7d09-497d-8330-9a41d6c23756',
-				dependencies: ['local_storage', 'curl', 'facade_url_downloader'],
+				dependencies: ['local_storage', 'curl_adapter', 'facade_url_downloader'],
 			},
 			{
 				name: 'Redis',
@@ -110,7 +110,7 @@ export class Distributor {
 		this.modules = [
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
-				config: config({ name: 'curl', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
+				config: config({ name: 'curl_adapter', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
 			},
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
@@ -143,8 +143,6 @@ export class Distributor {
 		);
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
-
-		console.log(`Module uploaded!`);
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
@@ -162,10 +160,15 @@ export class Distributor {
 		return bp;
 	}
 
-	async createService(node: Node, bpId: string): Promise<string> {
+	async createService(node: Node, bp: Blueprint): Promise<string> {
 		const client = await this.makeClient(node);
-		let serviceId = client.createService(bpId, node.peerId, TTL);
-		log.warn("Service id: " + serviceId)
+		log.warn(`creating service ${bp.name}@${bp.uuid}`);
+		let serviceId = await client.createService(bp.uuid, node.peerId, TTL);
+		log.warn(
+			`service created ${serviceId} as instance of ${bp.name}@${
+				bp.uuid
+			}`
+		);
 		return serviceId
 	}
 
@@ -262,13 +265,7 @@ export class Distributor {
 					}
 				}
 				const bp = await uploadB(this, node, blueprint);
-				log.warn(`creating service ${bp.name}@${bp.uuid}`);
-				let serviceId = await this.createService(node, bp.uuid);
-				log.warn(
-					`service created ${serviceId} as instance of ${bp.name}@${
-						bp.uuid
-					}`
-				);
+				await this.createService(node, bp);
 			}
 		}
 	}

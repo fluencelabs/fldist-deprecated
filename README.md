@@ -9,7 +9,7 @@ npm run run
 
 From console you can call
 ```shell
-npm run cli uploadAll
+npm run cli distribute
 ```
 
 In browser, open console, and call `await distribute()`;

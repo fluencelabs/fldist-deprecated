@@ -1,5 +1,5 @@
 import yargs from "yargs";
-import {addBlueprint, createService, runAir, uploadAll, uploadModule} from "./index";
+import {addBlueprint, createService, runAir, distribute, uploadModule} from "./index";
 
 const {hideBin} = require('yargs/helpers')
 
@@ -7,10 +7,10 @@ export function args() {
     return yargs(hideBin(process.argv))
         .usage('Usage: $0 <cmd> [options]') // usage string of application.
         .command({
-            command: 'uploadAll',
-            describe: 'Upload all artifacts',
+            command: 'distribute',
+            describe: 'Create services according to the distribution specified in the code',
             handler: async (_) => {
-                await uploadAll()
+                await distribute()
             }
         })
         .command({
