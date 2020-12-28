@@ -3,10 +3,12 @@ import Fluence from 'fluence';
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
 import {Node} from './environments';
-import {loadCustomWasmModule, loadWasmModule, TTL} from './index';
 import {build, genUUID} from "fluence/dist/particle";
 import {registerService} from "fluence/dist/globalState";
 import {ServiceOne} from "fluence/dist/service";
+import {promises as fs} from "fs";
+
+export const TTL = 20000;
 
 type ModuleConfig = {
 	name: string;
@@ -24,12 +26,17 @@ type Module = {
 	config: ModuleConfig;
 };
 
+export async function loadModule(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString('base64');
+}
+
 export async function getDefaultModule(name: string, path: string): Promise<Module> {
-	return { base64: await loadWasmModule(path), config: config({ name }) }
+	return { base64: await loadModule(`./src/artifacts/${name}`), config: config({ name }) }
 }
 
 export async function getCustomModule(name: string, path: string): Promise<Module> {
-	return { base64: await loadCustomWasmModule(path), config: config({ name }) }
+	return { base64: await loadModule(path), config: config({ name }) }
 }
 
 type Blueprint = {
@@ -106,21 +113,21 @@ export class Distributor {
 	async load_modules() {
 		this.modules = [
 			{
-				base64: await loadWasmModule('url-downloader/curl.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
 				config: config({ name: 'curl', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
 			},
 			{
-				base64: await loadWasmModule('url-downloader/local_storage.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
 				config: config({ name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: { sites: '/tmp' } }),
 			},
 			{
-				base64: await loadWasmModule('url-downloader/facade.wasm'),
+				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
 				config: config({ name: 'facade_url_downloader' }),
 			},
-			{ base64: await loadWasmModule('sqlite3.wasm'), config: config({ name: 'sqlite3' }) },
-			{ base64: await loadWasmModule('user-list.wasm'), config: config({ name: 'userlist' }) },
-			{ base64: await loadWasmModule('history.wasm'), config: config({ name: 'history' }) },
-			{ base64: await loadWasmModule('redis.wasm'), config: config({ name: 'redis' }) },
+			{ base64: await loadModule('./src/artifacts/sqlite3.wasm'), config: config({ name: 'sqlite3' }) },
+			{ base64: await loadModule('./src/artifacts/user-list.wasm'), config: config({ name: 'userlist' }) },
+			{ base64: await loadModule('./src/artifacts/history.wasm'), config: config({ name: 'history' }) },
+			{ base64: await loadModule('./src/artifacts/redis.wasm'), config: config({ name: 'redis' }) },
 		];
 	}
 
@@ -141,8 +148,7 @@ export class Distributor {
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
 
-		// const modules = await client.getAvailableModules(node.peerId, 20000);
-		// console.log(`modules: ${JSON.stringify(modules)}`);
+		console.log(`Module uploaded!`);
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
@@ -162,7 +168,9 @@ export class Distributor {
 
 	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
-		return client.createService(bpId, node.peerId, TTL);
+		let serviceId = client.createService(bpId, node.peerId, TTL);
+		log.warn("Service id: " + serviceId)
+		return serviceId
 	}
 
 	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
@@ -182,7 +190,9 @@ export class Distributor {
 			return {}
 		})
 		registerService(service)
-		return await client.sendParticle(particle)
+		let particleId = await client.sendParticle(particle)
+		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
+		return particleId
 	}
 
 	async uploadAllModules(node: Node) {
