@@ -46,14 +46,12 @@ export async function distribute() {
 
 export async function loadCustomWasmModule(path: string): Promise<string> {
     const data = await fs.readFile(path);
-    const base64data = data.toString('base64');
-    return base64data;
+    return data.toString('base64');
 }
 
 export async function loadWasmModule(name: string): Promise<string> {
     const data = await fs.readFile(`./src/artifacts/${name}`);
-    const base64data = data.toString('base64');
-    return base64data;
+    return data.toString('base64');
 }
 
 export async function addBlueprint(name: string, id: string, deps: string[]): Promise<void> {
@@ -63,10 +61,19 @@ export async function addBlueprint(name: string, id: string, deps: string[]): Pr
 }
 
 export async function createService(id: string): Promise<void> {
-
     const distributor = new Distributor([]);
     let serviceId = await distributor.createService(faasDev[2], id)
     log.warn("Service id: " + serviceId)
+}
+
+export async function runAir(path: string, data: Map<string, any>): Promise<void> {
+    const distributor = new Distributor([]);
+
+    const fileData = await fs.readFile(path);
+    const air = fileData.toString('utf-8');
+
+    let particleId = await distributor.runAir(faasDev[2], air, data)
+    log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
 }
 
 export async function uploadModule(name: string, path: string): Promise<void> {
@@ -124,46 +131,46 @@ if (typeof process === 'object') {
                         describe: 'path to wasm file',
                         type: 'string'
                     })
-					.option('n', {
-						alias: 'name',
-						demandOption: true,
-						describe: 'a name of a wasm module',
-						type: 'string'
-					})
+                    .option('n', {
+                        alias: 'name',
+                        demandOption: true,
+                        describe: 'a name of a wasm module',
+                        type: 'string'
+                    })
             },
             handler: async (argv) => {
                 return uploadModule(argv.name as string, argv.path as string)
             }
         })
         .command({
-            command: 'add_blueprint',
-            describe: 'Add blueprint',
-            builder: (yargs) => {
-                return yargs
-                    .option('d', {
-                        alias: 'deps',
-                        demandOption: true,
-                        describe: 'Dependencies',
-                        type: 'array'
-                    })
-                    .option('n', {
-                        alias: 'name',
-                        demandOption: true,
-                        describe: 'a name of a blueprint',
-                        type: 'string'
-                    })
-                    .option('i', {
-                        alias: 'id',
-                        demandOption: true,
-                        describe: 'an id of a blueprint',
-                        type: 'string'
-                    })
-            },
-            handler: async (argv) => {
-                return addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+                command: 'add_blueprint',
+                describe: 'Add blueprint',
+                builder: (yargs) => {
+                    return yargs
+                        .option('d', {
+                            alias: 'deps',
+                            demandOption: true,
+                            describe: 'Dependencies',
+                            type: 'array'
+                        })
+                        .option('n', {
+                            alias: 'name',
+                            demandOption: true,
+                            describe: 'a name of a blueprint',
+                            type: 'string'
+                        })
+                        .option('i', {
+                            alias: 'id',
+                            demandOption: true,
+                            describe: 'an id of a blueprint',
+                            type: 'string'
+                        })
+                },
+                handler: async (argv) => {
+                    return addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
 
+                }
             }
-        }
         )
         .command({
             command: 'create_service',
@@ -179,9 +186,34 @@ if (typeof process === 'object') {
 
             },
             handler: async (argv) => {
-                Fluence.setLogLevel('warn');
-                log.setLevel('warn');
                 return createService(argv.id as string)
+
+            }
+        })
+        .command({
+            command: 'run_air',
+            describe: 'Send an air script. Example: tsc && node -r esm . run_air -p /home/diemust/git/proto-distributor/script.clj -d \'{"provider":"780550a5-0e3a-4079-b82b-a53083a1bb19","verifier":"4f336826-9dfd-4d7b-9948-fae5cc11524f","json_path":"$.[\\"is_registered\\"]","peerId":"12D3KooWJbJFaZ3k5sNd8DjQgg3aERoKtBAnirEvPV8yp76kEXHB"}\'',
+            builder: (yargs) => {
+                return yargs
+                    .option('p', {
+                        alias: 'path',
+                        demandOption: true,
+                        describe: 'path to air script',
+                        type: 'string'
+                    })
+                    .option('d', {
+                        alias: 'data',
+                        demandOption: true,
+                        describe: 'data for air script',
+                        type: 'string'
+                    })
+                    .coerce("data", function (arg) {
+                        const dataJson = JSON.parse(arg);
+                        return new Map(Object.entries(dataJson));
+                    })
+            },
+            handler: async (argv) => {
+                return runAir(argv.path as string, argv.data as Map<string, any>)
 
             }
         })

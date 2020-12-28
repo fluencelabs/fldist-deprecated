@@ -4,9 +4,9 @@ import log from 'loglevel';
 import promiseRetry from 'promise-retry';
 import {Node} from './environments';
 import {loadCustomWasmModule, loadWasmModule, TTL} from './index';
-
-// type ModuleName = 'redis' | 'curl' | 'sqlite3' | 'history' | 'userlist' | 'facade_url_downloader' | 'local_storage';
-// type BlueprintName = 'Redis' | 'SQLite 3' | 'User List' | 'Message History' | 'URL Downloader' | 'Chat App';
+import {build, genUUID} from "fluence/dist/particle";
+import {registerService} from "fluence/dist/globalState";
+import {ServiceOne} from "fluence/dist/service";
 
 type ModuleConfig = {
 	name: string;
@@ -163,6 +163,26 @@ export class Distributor {
 	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
 		return client.createService(bpId, node.peerId, TTL);
+	}
+
+	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
+		const client = await this.makeClient(node);
+		let returnService = genUUID()
+
+		data.set("returnService", returnService);
+		data.set("relay", node.peerId);
+
+		let particle = await build(client.selfPeerId, air, data);
+		let service = new ServiceOne(returnService, (fnName, args, tetraplets) => {
+			console.log("===================")
+			console.log(fnName)
+			console.log(args)
+			console.log(tetraplets)
+			console.log("===================")
+			return {}
+		})
+		registerService(service)
+		return await client.sendParticle(particle)
 	}
 
 	async uploadAllModules(node: Node) {
