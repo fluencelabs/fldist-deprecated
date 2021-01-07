@@ -7,7 +7,7 @@ import {build, genUUID} from "fluence/dist/particle";
 import {registerService} from "fluence/dist/globalState";
 import {ServiceOne} from "fluence/dist/service";
 import {promises as fs} from "fs";
-import {peerIdToSeed} from "fluence/dist/seed";
+import {peerIdToSeed, seedToPeerId} from "fluence/dist/seed";
 
 export const TTL = 20000;
 
@@ -128,11 +128,15 @@ export class Distributor {
 		];
 	}
 
-	async makeClient(node: Node): Promise<FluenceClient> {
+	async makeClient(node: Node, seed?: string): Promise<FluenceClient> {
+		let peerId = undefined;
+		if (seed) {
+			peerId = await seedToPeerId(seed)
+		}
 		if (typeof this.innerClient !== 'undefined') {
 			return this.innerClient;
 		}
-		return Fluence.connect(node.multiaddr);
+		return Fluence.connect(node.multiaddr, peerId);
 	}
 
 	async uploadModule(node: Node, module: Module) {
@@ -176,8 +180,10 @@ export class Distributor {
 		return serviceId
 	}
 
-	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
-		const client = await this.makeClient(node);
+	async runAir(node: Node, air: string, data: Map<string, any>, seed?: string): Promise<string> {
+
+
+		const client = await this.makeClient(node, seed);
 		let returnService = genUUID()
 
 		data.set("returnService", returnService);

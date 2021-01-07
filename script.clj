@@ -2,10 +2,10 @@
  (call relay ("op" "identity") [])
  (seq
   (call relay (provider "register")
-        ["12D3KooWJbJFaZ3k5sNd8DjQgg3aERoKtBAnirEvPV8yp76kEXHB"])
+        [%init_peer_id%])
   (seq
    (call relay (provider "get_status")
-         ["12D3KooWJbJFaZ3k5sNd8DjQgg3aERoKtBAnirEvPV8yp76kEXHB"] status)
+         [] status)
    (seq
     (call %init_peer_id% (returnService "") [status])
     (seq

@@ -96,10 +96,16 @@ export function args() {
                         describe: 'blueprint id',
                         type: 'string'
                     })
+                    .option('s', {
+                        alias: 'seed',
+                        demandOption: false,
+                        describe: 'client seed',
+                        type: 'string'
+                    })
 
             },
             handler: async (argv) => {
-                await createService(argv.id as string)
+                await createService(argv.id as string, argv.seed as string)
                 console.log("service created successfully")
                 return;
 
@@ -116,6 +122,12 @@ export function args() {
                         describe: 'path to air script',
                         type: 'string'
                     })
+                    .option('s', {
+                        alias: 'seed',
+                        demandOption: false,
+                        describe: 'seed',
+                        type: 'string'
+                    })
                     .option('d', {
                         alias: 'data',
                         demandOption: true,
@@ -128,7 +140,7 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                return runAir(argv.path as string, argv.data as Map<string, any>)
+                return runAir(argv.path as string, argv.data as Map<string, any>, argv.seed as string)
 
             }
         })
