@@ -7,6 +7,7 @@ import {build, genUUID} from "fluence/dist/particle";
 import {registerService} from "fluence/dist/globalState";
 import {ServiceOne} from "fluence/dist/service";
 import {promises as fs} from "fs";
+import {peerIdToSeed} from "fluence/dist/seed";
 
 export const TTL = 20000;
 
@@ -136,6 +137,8 @@ export class Distributor {
 
 	async uploadModule(node: Node, module: Module) {
 		const client = await this.makeClient(node);
+		let seed = await peerIdToSeed(client.selfPeerId)
+		console.log("seed: " + seed)
 		log.warn(
 			`uploading module ${module.config.name} to node ${
 				node.peerId
@@ -143,6 +146,7 @@ export class Distributor {
 		);
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
+		console.log("module uploaded successfully")
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {

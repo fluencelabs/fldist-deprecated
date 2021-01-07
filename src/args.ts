@@ -1,5 +1,5 @@
 import yargs from "yargs";
-import {addBlueprint, createService, runAir, distribute, uploadModule} from "./index";
+import {addBlueprint, createService, runAir, distribute, uploadModule, getModules} from "./index";
 
 const {hideBin} = require('yargs/helpers')
 
@@ -32,7 +32,25 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                return uploadModule(argv.name as string, argv.path as string)
+                await uploadModule(argv.name as string, argv.path as string)
+                console.log("module uploaded successfully")
+                return;
+            }
+        })
+        .command({
+            command: 'get_modules',
+            describe: 'Print all modules on a node',
+            builder: (yargs) => {
+                return yargs
+                    .option('p', {
+                        alias: 'peer',
+                        demandOption: false,
+                        describe: 'nodes peer id',
+                        type: 'string'
+                    })
+            },
+            handler: async (argv) => {
+                return getModules(argv.peerId as string)
             }
         })
         .command({
@@ -60,7 +78,9 @@ export function args() {
                         })
                 },
                 handler: async (argv) => {
-                    return addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+                    await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+                    console.log("blueprint added successfully")
+                    return;
 
                 }
             }
@@ -79,7 +99,9 @@ export function args() {
 
             },
             handler: async (argv) => {
-                return createService(argv.id as string)
+                await createService(argv.id as string)
+                console.log("service created successfully")
+                return;
 
             }
         })

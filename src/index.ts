@@ -15,7 +15,8 @@ export async function addBlueprint(name: string, id: string, deps: string[]): Pr
 export async function createService(id: string): Promise<void> {
     const node = faasDev[2];
     const client = await Fluence.connect(node.multiaddr);
-    await client.createService(id, node.peerId, TTL)
+    let serviceId = await client.createService(id, node.peerId, TTL)
+    console.log("service id: " + serviceId)
 }
 
 export async function runAir(path: string, data: Map<string, any>): Promise<void> {
@@ -32,6 +33,17 @@ export async function uploadModule(name: string, path: string): Promise<void> {
     const distributor = new Distributor([]);
     await distributor.uploadModule(faasDev[2], module)
 }
+
+export async function getModules(peerId?: string): Promise<void> {
+    const distributor = new Distributor([]);
+    let client = await distributor.makeClient(faasDev[2])
+    if (!peerId) {
+        peerId = faasDev[2].peerId
+    }
+    let modules = await client.getAvailableModules(peerId);
+    console.log(modules)
+}
+
 
 export async function distribute(): Promise<void> {
     const distributor = new Distributor(faasNetHttps);
