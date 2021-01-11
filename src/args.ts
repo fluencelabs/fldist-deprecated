@@ -6,11 +6,17 @@ const {hideBin} = require('yargs/helpers')
 export function args() {
     return yargs(hideBin(process.argv))
         .usage('Usage: $0 <cmd> [options]') // usage string of application.
+        .option('s', {
+            alias: 'seed',
+            demandOption: false,
+            describe: 'Client seed',
+            type: 'string'
+        })
         .command({
             command: 'distribute',
             describe: 'Create services according to the distribution specified in the code',
-            handler: async (_) => {
-                await distribute()
+            handler: async (argv) => {
+                await distribute(argv.seed as string)
             }
         })
         .command({
@@ -21,18 +27,18 @@ export function args() {
                     .option('p', {
                         alias: 'path',
                         demandOption: true,
-                        describe: 'path to wasm file',
+                        describe: 'Path to wasm file',
                         type: 'string'
                     })
                     .option('n', {
                         alias: 'name',
                         demandOption: true,
-                        describe: 'a name of a wasm module',
+                        describe: 'A name of a wasm module',
                         type: 'string'
                     })
             },
             handler: async (argv) => {
-                await uploadModule(argv.name as string, argv.path as string)
+                await uploadModule(argv.name as string, argv.path as string, argv.seed as string)
                 console.log("module uploaded successfully")
                 return;
             }
@@ -50,12 +56,12 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                return getModules(argv.peerId as string)
+                return getModules(argv.peerId as string, argv.seed as string)
             }
         })
         .command({
                 command: 'add_blueprint',
-                describe: 'Add blueprint',
+                describe: 'Add a blueprint',
                 builder: (yargs) => {
                     return yargs
                         .option('d', {
@@ -72,13 +78,13 @@ export function args() {
                         })
                         .option('i', {
                             alias: 'id',
-                            demandOption: true,
+                            demandOption: false,
                             describe: 'an id of a blueprint',
                             type: 'string'
                         })
                 },
                 handler: async (argv) => {
-                    await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[])
+                    await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[], argv.seed as string)
                     console.log("blueprint added successfully")
                     return;
 
@@ -96,12 +102,6 @@ export function args() {
                         describe: 'blueprint id',
                         type: 'string'
                     })
-                    .option('s', {
-                        alias: 'seed',
-                        demandOption: false,
-                        describe: 'client seed',
-                        type: 'string'
-                    })
 
             },
             handler: async (argv) => {
@@ -113,25 +113,19 @@ export function args() {
         })
         .command({
             command: 'run_air',
-            describe: 'Send an air script. Example: tsc && node -r esm . run_air -p /home/diemust/git/proto-distributor/script.clj -d \'{"provider":"780550a5-0e3a-4079-b82b-a53083a1bb19","verifier":"4f336826-9dfd-4d7b-9948-fae5cc11524f","json_path":"$.[\\"is_registered\\"]","peerId":"12D3KooWJbJFaZ3k5sNd8DjQgg3aERoKtBAnirEvPV8yp76kEXHB"}\'',
+            describe: 'Send an air script from a file. Send arguments to "returnService" back to the client to print them in the console. More examples in "scripts_examples" directory.',
             builder: (yargs) => {
                 return yargs
                     .option('p', {
                         alias: 'path',
                         demandOption: true,
-                        describe: 'path to air script',
-                        type: 'string'
-                    })
-                    .option('s', {
-                        alias: 'seed',
-                        demandOption: false,
-                        describe: 'seed',
+                        describe: 'Path to air script',
                         type: 'string'
                     })
                     .option('d', {
                         alias: 'data',
                         demandOption: true,
-                        describe: 'data for air script',
+                        describe: 'Data for air script in json',
                         type: 'string'
                     })
                     .coerce("data", function (arg) {

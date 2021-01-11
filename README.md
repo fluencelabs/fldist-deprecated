@@ -7,10 +7,17 @@ npm i
 npm run run 
 ```
 
+## Help to get all commands
+```shell
+npm run cli --help
+```
+
 From console you can call
 ```shell
 npm run cli distribute
 ```
+
+Air scripts examples is in `scripts_examples` direcotory
 
 In browser, open console, and call `await distribute()`;
 
