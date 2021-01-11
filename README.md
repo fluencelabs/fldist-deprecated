@@ -12,12 +12,16 @@ npm run run
 npm run cli --help
 ```
 
+Air scripts examples is in `scripts_examples` direcotory
+
+## Distribute basic services to Fluence network
+
 From console you can call
 ```shell
 npm run cli distribute
 ```
 
-Air scripts examples is in `scripts_examples` direcotory
+
 
 In browser, open console, and call `await distribute()`;
 
