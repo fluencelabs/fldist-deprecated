@@ -10,14 +10,16 @@ import {Distributor, getModule, TTL} from './distributor';
 import {args} from "./args";
 import {seedToPeerId} from "fluence/dist/seed";
 
+const DEFAULT_NODE = faasDev[2];
+
 export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
     const distributor = new Distributor([], seed);
-    let bp = await distributor.uploadBlueprint(faasDev[2], {name, id: id, dependencies: deps})
+    let bp = await distributor.uploadBlueprint(DEFAULT_NODE, {name, id: id, dependencies: deps})
     return bp.id
 }
 
 export async function createService(id: string, seed?: string): Promise<void> {
-    const node = faasDev[2];
+    const node = DEFAULT_NODE;
 
     let peerId = undefined;
     if (seed) {
@@ -34,20 +36,20 @@ export async function runAir(path: string, data: Map<string, any>, seed?: string
     const fileData = await fs.readFile(path);
     const air = fileData.toString('utf-8');
 
-    await distributor.runAir(faasDev[2], air, data)
+    await distributor.runAir(DEFAULT_NODE, air, data)
 }
 
 export async function uploadModule(name: string, path: string, seed?: string): Promise<void> {
     let module = await getModule(name, path)
     const distributor = new Distributor([], seed);
-    await distributor.uploadModule(faasDev[2], module)
+    await distributor.uploadModule(DEFAULT_NODE, module)
 }
 
 export async function getModules(peerId?: string, seed?: string): Promise<void> {
     const distributor = new Distributor([], seed);
-    let client = await distributor.makeClient(faasDev[2])
+    let client = await distributor.makeClient(DEFAULT_NODE)
     if (!peerId) {
-        peerId = faasDev[2].peerId
+        peerId = DEFAULT_NODE.peerId
     }
     let modules = await client.getAvailableModules(peerId);
     console.log(modules)
