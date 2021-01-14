@@ -84,10 +84,9 @@ export function args() {
                         })
                 },
                 handler: async (argv) => {
-                    await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[], argv.seed as string)
-                    console.log("blueprint added successfully")
+                    let id = await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[], argv.seed as string)
+                    console.log(`blueprint '${id}' added successfully`)
                     return;
-
                 }
             }
         )

@@ -151,7 +151,6 @@ export class Distributor {
 		);
 
 		await client.addModule(module.config.name, module.base64, module.config, node.peerId, TTL);
-		console.log("module uploaded successfully")
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {

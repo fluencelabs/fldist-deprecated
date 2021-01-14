@@ -16,7 +16,7 @@
   },
   "main": "dist/index.js",
   "bin": {
-    "upload": "dist/index.js"
+    "proto-dist": "dist/index.js"
   },
   "types": "dist/index.d.ts",
   "files": [

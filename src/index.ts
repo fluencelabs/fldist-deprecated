@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import Fluence from 'fluence';
 import log from 'loglevel';
 
@@ -8,9 +10,10 @@ import {Distributor, getModule, TTL} from './distributor';
 import {args} from "./args";
 import {seedToPeerId} from "fluence/dist/seed";
 
-export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<void> {
+export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
     const distributor = new Distributor([], seed);
-    await distributor.uploadBlueprint(faasDev[2], {name, id: id, dependencies: deps})
+    let bp = await distributor.uploadBlueprint(faasDev[2], {name, id: id, dependencies: deps})
+    return bp.id
 }
 
 export async function createService(id: string, seed?: string): Promise<void> {
