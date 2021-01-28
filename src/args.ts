@@ -1,5 +1,5 @@
 import yargs from "yargs";
-import {addBlueprint, createService, runAir, distribute, uploadModule, getModules} from "./index";
+import {addBlueprint, createService, runAir, distribute, uploadModule, getModules, getInterfaces} from "./index";
 
 const {hideBin} = require('yargs/helpers')
 
@@ -57,6 +57,22 @@ export function args() {
             },
             handler: async (argv) => {
                 return getModules(argv.peerId as string, argv.seed as string)
+            }
+        })
+        .command({
+            command: 'get_interfaces',
+            describe: 'Print all services on a node',
+            builder: (yargs) => {
+                return yargs
+                    .option('p', {
+                        alias: 'peer',
+                        demandOption: false,
+                        describe: 'nodes peer id',
+                        type: 'string'
+                    })
+            },
+            handler: async (argv) => {
+                return getInterfaces(argv.peerId as string, argv.seed as string)
             }
         })
         .command({
