@@ -7,7 +7,7 @@ import {Distributor, getModule} from './distributor';
 import {args} from "./args";
 import {getModules as getMod} from "@fluencelabs/fluence";
 
-const DEFAULT_NODE = faasDev[2];
+const DEFAULT_NODE = faasDev[4];
 
 export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
     const distributor = new Distributor([], seed);
@@ -16,16 +16,11 @@ export async function addBlueprint(name: string, id: string, deps: string[], see
 }
 
 export async function createService(id: string, seed?: string): Promise<void> {
-
-    // TODO
-    /*const node = DEFAULT_NODE;
+    const node = DEFAULT_NODE;
 
     const distributor = new Distributor([], seed);
-
-    const client = await distributor.makeClient(DEFAULT_NODE)
-
-    let serviceId = await client.createService(id, node.peerId, TTL)
-    console.log("service id: " + serviceId)*/
+    let serviceId = distributor.createService(node, id);
+    console.log("service id: " + serviceId)
 }
 
 export async function runAir(path: string, data: Map<string, any>, seed?: string): Promise<void> {
