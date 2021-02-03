@@ -1,5 +1,6 @@
 import yargs from "yargs";
-import {addBlueprint, createService, runAir, distribute, uploadModule, getModules} from "./index";
+import {addBlueprint, createService, runAir, distribute, uploadModule, getModules, getInterfaces} from "./index";
+import {generatePeerId, peerIdToSeed} from "@fluencelabs/fluence";
 
 const {hideBin} = require('yargs/helpers')
 
@@ -60,6 +61,22 @@ export function args() {
             }
         })
         .command({
+            command: 'get_interfaces',
+            describe: 'Print all services on a node',
+            builder: (yargs) => {
+                return yargs
+                    .option('p', {
+                        alias: 'peer',
+                        demandOption: false,
+                        describe: 'nodes peer id',
+                        type: 'string'
+                    })
+            },
+            handler: async (argv) => {
+                return getInterfaces(argv.peerId as string, argv.seed as string)
+            }
+        })
+        .command({
                 command: 'add_blueprint',
                 describe: 'Add a blueprint',
                 builder: (yargs) => {
@@ -106,6 +123,22 @@ export function args() {
             handler: async (argv) => {
                 await createService(argv.id as string, argv.seed as string)
                 console.log("service created successfully")
+                return;
+
+            }
+        })
+        .command({
+            command: 'create_keypair',
+            describe: 'Generates a random keypair',
+            builder: (yargs) => {
+                return yargs
+            },
+            handler: async (argv) => {
+                let peerId = await generatePeerId();
+                console.log({
+                    ...peerId.toJSON(),
+                    seed: peerIdToSeed(peerId),
+                })
                 return;
 
             }
