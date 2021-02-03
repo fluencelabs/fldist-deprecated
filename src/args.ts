@@ -17,7 +17,8 @@ export function args() {
             command: 'distribute',
             describe: 'Create services according to the distribution specified in the code',
             handler: async (argv) => {
-                await distribute(argv.seed as string)
+                await distribute(argv.seed as string);
+                process.exit(0);
             }
         })
         .command({
@@ -41,7 +42,7 @@ export function args() {
             handler: async (argv) => {
                 await uploadModule(argv.name as string, argv.path as string, argv.seed as string)
                 console.log("module uploaded successfully")
-                return;
+                process.exit(0);
             }
         })
         .command({
@@ -55,9 +56,20 @@ export function args() {
                         describe: 'nodes peer id',
                         type: 'string'
                     })
+                    .option('pretty', {
+                        demandOption: false,
+                        describe: 'whether to pretty json output',
+                        type: 'boolean'
+                    })
             },
             handler: async (argv) => {
-                return getModules(argv.peerId as string, argv.seed as string)
+                let modules = await getModules(argv.peerId as string, argv.seed as string);
+                if (argv.pretty) {
+                    console.log(JSON.stringify(modules, undefined, 2))
+                } else {
+                    console.log(JSON.stringify(modules))
+                }
+                process.exit(0);
             }
         })
         .command({
@@ -73,7 +85,8 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                return getInterfaces(argv.peerId as string, argv.seed as string)
+                await getInterfaces(argv.peerId as string, argv.seed as string);
+                process.exit(0);
             }
         })
         .command({
@@ -103,7 +116,7 @@ export function args() {
                 handler: async (argv) => {
                     let id = await addBlueprint(argv.name as string, argv.id as string, argv.deps as string[], argv.seed as string)
                     console.log(`blueprint '${id}' added successfully`)
-                    return;
+                    process.exit(0);
                 }
             }
         )
@@ -121,9 +134,9 @@ export function args() {
 
             },
             handler: async (argv) => {
-                await createService(argv.id as string, argv.seed as string)
-                console.log("service created successfully")
-                return;
+                await createService(argv.id as string, argv.seed as string);
+                console.log("service created successfully");
+                process.exit(0);
 
             }
         })
@@ -139,8 +152,7 @@ export function args() {
                     ...peerId.toJSON(),
                     seed: peerIdToSeed(peerId),
                 })
-                return;
-
+                process.exit(0);
             }
         })
         .command({
@@ -166,9 +178,9 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                return runAir(argv.path as string, argv.data as Map<string, any>, argv.seed as string)
-
+                await runAir(argv.path as string, argv.data as Map<string, any>, argv.seed as string);
+                process.exit(0);
             }
         })
-        .argv;
+        .parse();
 }
