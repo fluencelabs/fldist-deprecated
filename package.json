@@ -1,22 +1,19 @@
 {
-  "name": "proto-distributor",
-  "version": "0.0.1",
+  "name": "fldist",
+  "version": "0.0.16",
   "keywords": [
     "typescript",
     "template"
   ],
-  "author": {
-    "name": "FluenceLabs",
-    "url": "https://github.com/fluencelabs"
-  },
+  "author": "FluenceLabs (https://github.com/fluencelabs)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fluencelabs/proto-distributor"
+    "url": "git+https://github.com/fluencelabs/proto-distributor.git"
   },
   "main": "dist/index.js",
   "bin": {
-    "proto-dist": "dist/index.js"
+    "fldist": "./dist/index.js"
   },
   "types": "dist/index.d.ts",
   "files": [
@@ -26,65 +23,49 @@
     "@babel/parser": "7.3.0"
   },
   "scripts": {
+    "tsc": "tsc --noImplicitUseStrict",
     "cli": "tsc && node -r esm -r ts-node/register dist/index.js",
-    "run": "npx --node-arg '-r esm' --node-arg '-r ts-node/register' parcel index.html",
-    "build": "npm run clean && tsc",
-    "changelog": "conventional-changelog -p angular -u",
-    "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
-    "clean": "(rm -r ./.nyc_output || true) && (rm -r ./coverage || true) && (rm -r ./dist || true)",
+    "clean": "(rm -r ./dist || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
-    "cover": "nyc npm run test",
-    "cover:check": "nyc --check-coverage npm run test",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
-    "preversion": "npm run build && npm run cover:check",
-    "postversion": "git push && git push --tags",
-    "prepare": "npm run build",
     "test": "mocha",
-    "upgrade": "npx npm-check -u",
-    "version": "npm run build && npm run changelog:update"
+    "build": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
   },
   "devDependencies": {
     "@types/chai": "^4.1.6",
     "@types/mocha": "^8.0.0",
     "@types/node": "^14.14.16",
     "@types/promise-retry": "^1.1.3",
+    "@types/uuid": "8.3.0",
     "@types/yargs": "^15.0.12",
     "@typescript-eslint/eslint-plugin": "^4.11.0",
     "@typescript-eslint/parser": "^4.11.0",
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0",
+    "babel-preset-env": "1.7.0",
     "chai": "^4.1.2",
-    "conventional-changelog-cli": "^2.0.12",
     "coveralls": "^3.0.3",
-    "cz-conventional-changelog": "^3.0.2",
     "eslint": "^7.16.0",
-    "eslint-config-prettier": "^7.1.0",
-    "eslint-plugin-prettier": "^3.3.0",
     "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-import": "^2.22.1",
-    "esm": "^3.2.25",
+    "eslint-plugin-prettier": "^3.3.0",
     "mocha": "^8.1.3",
-    "nyc": "^15.0.0",
-    "parcel": "^1.12.4",
-    "parcel-bundler": "^1.12.4",
     "prettier": "^2.2.1",
     "source-map-support": "^0.5.12",
     "ts-node": "^9.0.0",
-    "typescript": "^4.1.2",
-    "@types/uuid": "8.3.0"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
+    "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@fluencelabs/fluence": "0.9.11",
+    "@fluencelabs/fluence": "0.9.13",
     "@fluencelabs/fluence-network-environment": "1.0.8",
+    "esm": "^3.2.25",
     "loglevel": "^1.7.1",
     "promise-retry": "^2.0.1",
-    "yargs": "^16.2.0",
-    "uuid": "8.3.0"
-  }
+    "uuid": "8.3.0",
+    "yargs": "^16.2.0"
+  },
+  "description": "Can distribute modules, blueprints and create services.",
+  "bugs": {
+    "url": "https://github.com/fluencelabs/proto-distributor/issues"
+  },
+  "homepage": "https://github.com/fluencelabs/proto-distributor#readme"
 }

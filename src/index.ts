@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S bash
 
 import log from 'loglevel';
 import {promises as fs} from 'fs';
