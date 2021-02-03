@@ -2,12 +2,12 @@
 
 import log from 'loglevel';
 import {promises as fs} from 'fs';
-import {faasDev, faasNetHttps} from './environments';
 import {Distributor, getModule} from './distributor';
 import {args} from "./args";
 import {getModules as getMod} from "@fluencelabs/fluence";
+import {dev} from "@fluencelabs/fluence-network-environment";
 
-const DEFAULT_NODE = faasDev[4];
+const DEFAULT_NODE = dev[2];
 
 export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
     const distributor = new Distributor([], seed);
@@ -57,11 +57,12 @@ export async function getInterfaces(peerId?: string, seed?: string): Promise<voi
 }
 
 export async function distribute(seed?: string): Promise<void> {
-    const distributor = new Distributor(faasDev, seed);
+    const distributor = new Distributor(dev, seed);
     await distributor.load_modules();
     await distributor
         .distributeServices(
-            faasNetHttps[0],
+            // TODO make it configurable
+            dev[0],
             new Map([
                 ['SQLite 3', [1, 2, 3, 4, 5]],
                 ['User List', [1, 2, 3, 4, 5]],

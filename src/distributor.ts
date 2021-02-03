@@ -1,6 +1,5 @@
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
-import {Node} from './environments';
 import {promises as fs} from "fs";
 import {
 	addBlueprint,
@@ -12,6 +11,7 @@ import {
 } from "@fluencelabs/fluence";
 import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClientImpl";
 import {v4 as uuidv4} from 'uuid';
+import {Node} from "@fluencelabs/fluence-network-environment";
 
 export const TTL = 20000;
 
@@ -158,7 +158,7 @@ export class Distributor {
 			} via client ${client.selfPeerId}`,
 		);
 
-		await uploadModule(client, module.config.name, module.base64, module.config);
+		await uploadModule(client, module.config.name, module.base64, module.config, undefined,20000);
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {
