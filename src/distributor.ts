@@ -158,7 +158,7 @@ export class Distributor {
 			} via client ${client.selfPeerId}`,
 		);
 
-		await uploadModule(client, module.config.name, module.base64, module.config, undefined,20000);
+		await uploadModule(client, module.config.name, module.base64, module.config);
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<Blueprint> {

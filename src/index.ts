@@ -4,7 +4,7 @@ import log from 'loglevel';
 import {promises as fs} from 'fs';
 import {Distributor, getModule} from './distributor';
 import {args} from "./args";
-import {getModules as getMod} from "@fluencelabs/fluence";
+import {getModules as getMod, getInterfaces as getInter} from "@fluencelabs/fluence";
 import {dev} from "@fluencelabs/fluence-network-environment";
 
 const DEFAULT_NODE = dev[2];
@@ -52,7 +52,7 @@ export async function getInterfaces(peerId?: string, seed?: string): Promise<voi
     const distributor = new Distributor([], seed);
     let client = await distributor.makeClient(DEFAULT_NODE)
 
-    let modules = await getMod(client);
+    let modules = await getInter(client);
     console.log(modules)
 }
 
