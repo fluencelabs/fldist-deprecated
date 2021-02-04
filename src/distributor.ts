@@ -11,19 +11,9 @@ import {
 import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClientImpl";
 import {v4 as uuidv4} from 'uuid';
 import {Node} from "@fluencelabs/fluence-network-environment";
+import {ModuleConfig} from "@fluencelabs/fluence/dist/internal/moduleConfig";
 
 export const TTL = 20000;
-
-type ModuleConfig = {
-	name: string;
-	logger_enabled: boolean;
-	mounted_binaries: any | undefined;
-	wasi: {
-		preopened_files: string[];
-		mapped_dirs: any | undefined;
-	};
-	mem_pages_count: number;
-};
 
 type Module = {
 	base64: string;
@@ -166,8 +156,9 @@ export class Distributor {
 		log.warn(
 			`uploading module ${module.config.name} to node ${
 				node.peerId
-			} via client ${client.selfPeerId}`,
+			} via client ${client.selfPeerId} with config:`,
 		);
+		log.warn(JSON.stringify(module.config, undefined, 2))
 
 		await uploadModule(client, module.config.name, module.base64, module.config);
 	}
