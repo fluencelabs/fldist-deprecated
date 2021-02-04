@@ -31,7 +31,9 @@ export async function newService(blueprint_name: string, module_paths: {name: st
 
     // upload modules
     const modules = await Promise.all(module_paths.map(m => getModule(m.name, m.path)));
-    await Promise.all(modules.map(module => distributor.uploadModuleToNode(node, module)));
+    for (const module of modules) {
+        await distributor.uploadModuleToNode(node, module);
+    }
 
     // create blueprints
     const dependencies = modules.map(m => m.config.name);
