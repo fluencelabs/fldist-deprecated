@@ -32,8 +32,8 @@ export async function runAir(path: string, data: Map<string, any>, seed?: string
     await distributor.runAir(DEFAULT_NODE, air, data)
 }
 
-export async function uploadModule(name: string, path: string, seed?: string): Promise<void> {
-    let module = await getModule(name, path)
+export async function uploadModule(name: string, path: string, configPath?: string, seed?: string): Promise<void> {
+    let module = await getModule(name, path, configPath)
     const distributor = new Distributor([], seed);
     await distributor.uploadModuleToNode(DEFAULT_NODE, module)
 }

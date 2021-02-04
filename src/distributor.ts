@@ -36,8 +36,19 @@ export async function loadModule(path: string): Promise<string> {
 	return data.toString('base64');
 }
 
-export async function getModule(name: string, path: string): Promise<Module> {
-	return { base64: await loadModule(path), config: config({ name }) }
+export async function getModule(name: string, path: string, configPath?: string): Promise<Module> {
+	let config;
+	if (configPath) {
+		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
+	} else {
+		config = createConfig({ name })
+	}
+	return { base64: await loadModule(path), config:  config}
+}
+
+export async function getFileContent(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString();
 }
 
 type Blueprint = {
@@ -53,7 +64,7 @@ type ConfigArgs = {
 	mappedDirs?: any;
 };
 
-function config(args: ConfigArgs): ModuleConfig {
+function createConfig(args: ConfigArgs): ModuleConfig {
 	return {
 		name: args.name,
 		mem_pages_count: 100,
@@ -116,20 +127,20 @@ export class Distributor {
 		this.modules = [
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
-				config: config({ name: 'curl_adapter', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
+				config: createConfig({ name: 'curl_adapter', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
 			},
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
-				config: config({ name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: { sites: '/tmp' } }),
+				config: createConfig({ name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: { sites: '/tmp' } }),
 			},
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
-				config: config({ name: 'facade_url_downloader' }),
+				config: createConfig({ name: 'facade_url_downloader' }),
 			},
-			{ base64: await loadModule('./src/artifacts/sqlite3.wasm'), config: config({ name: 'sqlite3' }) },
-			{ base64: await loadModule('./src/artifacts/user-list.wasm'), config: config({ name: 'userlist' }) },
-			{ base64: await loadModule('./src/artifacts/history.wasm'), config: config({ name: 'history' }) },
-			{ base64: await loadModule('./src/artifacts/redis.wasm'), config: config({ name: 'redis' }) },
+			{ base64: await loadModule('./src/artifacts/sqlite3.wasm'), config: createConfig({ name: 'sqlite3' }) },
+			{ base64: await loadModule('./src/artifacts/user-list.wasm'), config: createConfig({ name: 'userlist' }) },
+			{ base64: await loadModule('./src/artifacts/history.wasm'), config: createConfig({ name: 'history' }) },
+			{ base64: await loadModule('./src/artifacts/redis.wasm'), config: createConfig({ name: 'redis' }) },
 		];
 	}
 
