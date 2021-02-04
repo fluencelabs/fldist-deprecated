@@ -1,5 +1,14 @@
 import yargs from "yargs";
-import {addBlueprint, createService, runAir, distribute, uploadModule, getModules, getInterfaces} from "./index";
+import {
+    addBlueprint,
+    createService,
+    runAir,
+    distribute,
+    uploadModule,
+    getModules,
+    getInterfaces,
+    newService
+} from "./index";
 import {generatePeerId, peerIdToSeed} from "@fluencelabs/fluence";
 
 const {hideBin} = require('yargs/helpers')
@@ -134,7 +143,7 @@ type ConfigArgs = {
         )
         .command({
             command: 'create_service',
-            describe: 'Create a service',
+            describe: 'Create a service from existing blueprint',
             builder: (yargs) => {
                 return yargs
                     .option('i', {
@@ -150,6 +159,36 @@ type ConfigArgs = {
                 console.log("service created successfully");
                 process.exit(0);
 
+            }
+        })
+        .command({
+            command: 'new_service',
+            describe: 'Create service from a list of modules',
+            builder: (yargs) => {
+                return yargs
+                    .option('ms', {
+                        alias: 'modules',
+                        demandOption: true,
+                        describe: 'name:path; name – import name of a module, path – path to a wasm module',
+                        type: 'array'
+                    })
+                    .coerce('modules', (arg: string[]) => {
+                        return arg.map(s => {
+                            const [name, path] = s.split(':');
+                            return { name, path };
+                        });
+                    })
+                    .option('n', {
+                        alias: 'name',
+                        demandOption: true,
+                        describe: 'name of the service; will be set in the blueprint',
+                        type: 'string'
+                    })
+            },
+            handler: async (argv) => {
+                await newService(argv.name as string, argv.modules as any[], argv.seed as string);
+                console.log("service created successfully");
+                process.exit(0);
             }
         })
         .command({

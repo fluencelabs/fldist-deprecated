@@ -4,8 +4,7 @@ import {promises as fs} from "fs";
 import {
 	addBlueprint,
 	createService as fluenceCreateService,
-	generatePeerId,
-	peerIdToSeed,
+	generatePeerId, peerIdToSeed,
 	seedToPeerId,
 	uploadModule
 } from "@fluencelabs/fluence";
@@ -86,6 +85,7 @@ export class Distributor {
 
 	// If innerClient is set, it will be used for all requests. Otherwise, a new client will be generated on each request.
 	innerClient?: FluenceClientImpl;
+	// Seed of the private key of the used PeerId
 	seed?: string;
 
 	constructor(nodes: Node[], seed?: string) {
@@ -149,20 +149,20 @@ export class Distributor {
 		if (this.seed) {
 			peerId = await seedToPeerId(this.seed)
 		} else {
-			peerId = await generatePeerId()
+			peerId = await generatePeerId();
+			this.seed = peerIdToSeed(peerId);
 		}
-		if (typeof this.innerClient !== 'undefined') {
-			return this.innerClient;
+		if (typeof this.innerClient == 'undefined' || this.innerClient.relayPeerId != node.peerId) {
+			console.log("seed: " + this.seed);
+			console.log("peerId: " + peerId);
+			this.innerClient = new FluenceClientImpl(peerId);
+			await this.innerClient.connect(node.multiaddr);
 		}
-		const client = new FluenceClientImpl(peerId);
-		await client.connect(node.multiaddr);
-		return client;
+		return this.innerClient;
 	}
 
 	async uploadModuleToNode(node: Node, module: Module) {
 		const client = await this.makeClient(node);
-		let seed = await peerIdToSeed(client.selfPeerIdFull)
-		console.log("seed: " + seed)
 		log.warn(
 			`uploading module ${module.config.name} to node ${
 				node.peerId

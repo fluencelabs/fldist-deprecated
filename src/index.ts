@@ -6,6 +6,7 @@ import {Distributor, getModule} from './distributor';
 import {args} from "./args";
 import {getInterfaces as getInter, getModules as getMod} from "@fluencelabs/fluence";
 import {dev} from "@fluencelabs/fluence-network-environment";
+import {v4 as uuidv4} from 'uuid';
 
 const DEFAULT_NODE = dev[2];
 
@@ -15,11 +16,31 @@ export async function addBlueprint(name: string, id: string, deps: string[], see
     return bp.id
 }
 
-export async function createService(id: string, seed?: string): Promise<void> {
+export async function createService(blueprint_id: string, seed?: string): Promise<void> {
     const node = DEFAULT_NODE;
 
     const distributor = new Distributor([], seed);
-    let serviceId = await distributor.createService(node, id);
+    let serviceId = await distributor.createService(node, blueprint_id);
+    console.log("service id: " + serviceId)
+}
+
+export async function newService(blueprint_name: string, module_paths: {name: string, path: string}[], seed?: string): Promise<void> {
+    const node = DEFAULT_NODE;
+
+    const distributor = new Distributor([], seed);
+
+    // upload modules
+    const modules = await Promise.all(module_paths.map(m => getModule(m.name, m.path)));
+    for (const module of modules) {
+        await distributor.uploadModuleToNode(node, module);
+    }
+
+    // create blueprints
+    const dependencies = modules.map(m => m.config.name);
+    const blueprint = await distributor.uploadBlueprint(node, { name: blueprint_name, id: uuidv4(), dependencies })
+
+    // create service
+    const serviceId = await distributor.createService(node, blueprint.id);
     console.log("service id: " + serviceId)
 }
 
