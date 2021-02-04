@@ -20,7 +20,7 @@ export async function createService(blueprint_id: string, seed?: string): Promis
     const node = DEFAULT_NODE;
 
     const distributor = new Distributor([], seed);
-    let serviceId = distributor.createService(node, blueprint_id);
+    let serviceId = await distributor.createService(node, blueprint_id);
     console.log("service id: " + serviceId)
 }
 
@@ -40,7 +40,7 @@ export async function newService(blueprint_name: string, module_paths: {name: st
     const blueprint = await distributor.uploadBlueprint(node, { name: blueprint_name, id: uuidv4(), dependencies })
 
     // create service
-    const serviceId = distributor.createService(node, blueprint.id);
+    const serviceId = await distributor.createService(node, blueprint.id);
     console.log("service id: " + serviceId)
 }
 
@@ -53,8 +53,8 @@ export async function runAir(path: string, data: Map<string, any>, seed?: string
     await distributor.runAir(DEFAULT_NODE, air, data)
 }
 
-export async function uploadModule(name: string, path: string, seed?: string): Promise<void> {
-    let module = await getModule(name, path)
+export async function uploadModule(name: string, path: string, configPath?: string, seed?: string): Promise<void> {
+    let module = await getModule(name, path, configPath)
     const distributor = new Distributor([], seed);
     await distributor.uploadModuleToNode(DEFAULT_NODE, module)
 }

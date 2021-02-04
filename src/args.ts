@@ -41,6 +41,18 @@ export function args() {
                         describe: 'Path to wasm file',
                         type: 'string'
                     })
+                    .option('c', {
+                        alias: 'config',
+                        demandOption: false,
+                        describe: `Path to config in this format:
+type ConfigArgs = {
+\tname: string;
+\tmountedBinaries?: any;
+\tpreopenedFiles?: string[];
+\tmappedDirs?: any;
+};`,
+                        type: 'string'
+                    })
                     .option('n', {
                         alias: 'name',
                         demandOption: true,
@@ -49,7 +61,7 @@ export function args() {
                     })
             },
             handler: async (argv) => {
-                await uploadModule(argv.name as string, argv.path as string, argv.seed as string)
+                await uploadModule(argv.name as string, argv.path as string, argv.config as string, argv.seed as string)
                 console.log("module uploaded successfully")
                 process.exit(0);
             }
