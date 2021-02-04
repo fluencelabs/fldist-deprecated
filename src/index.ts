@@ -19,7 +19,7 @@ export async function createService(id: string, seed?: string): Promise<void> {
     const node = DEFAULT_NODE;
 
     const distributor = new Distributor([], seed);
-    let serviceId = distributor.createService(node, id);
+    let serviceId = await distributor.createService(node, id);
     console.log("service id: " + serviceId)
 }
 
