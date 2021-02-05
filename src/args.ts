@@ -230,7 +230,6 @@ type ConfigArgs = {
             },
             handler: async (argv) => {
                 await runAir(argv.path as string, argv.data as Map<string, any>, argv.seed as string);
-                process.exit(0);
             }
         })
         .parse();
