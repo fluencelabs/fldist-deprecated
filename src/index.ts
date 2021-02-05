@@ -68,12 +68,17 @@ export async function getModules(peerId?: string, seed?: string): Promise<string
     return await getMod(client);
 }
 
-export async function getInterfaces(peerId?: string, seed?: string): Promise<void> {
+export async function getInterfaces(peerId?: string, seed?: string, expand?: boolean): Promise<void> {
     const distributor = new Distributor([], seed);
     let client = await distributor.makeClient(DEFAULT_NODE)
 
     let interfaces = await getInter(client);
-    console.log(JSON.stringify(interfaces, undefined, 2))
+    if (expand) {
+        console.log(JSON.stringify(interfaces, undefined, 2))
+    } else {
+        console.log(interfaces);
+        console.log("to expand interfaces, use get_interfaces --expand")
+    }
 }
 
 export async function distribute(seed?: string): Promise<void> {

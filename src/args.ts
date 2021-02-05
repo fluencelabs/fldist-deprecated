@@ -104,9 +104,14 @@ type ConfigArgs = {
                         describe: 'nodes peer id',
                         type: 'string'
                     })
+                    .option('expand', {
+                        demandOption: false,
+                        describe: 'expand interfaces. default is minified',
+                        type: 'boolean'
+                    })
             },
             handler: async (argv) => {
-                await getInterfaces(argv.peerId as string, argv.seed as string);
+                await getInterfaces(argv.peerId as string, argv.seed as string, argv.expand as boolean);
                 process.exit(0);
             }
         })
