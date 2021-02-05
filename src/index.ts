@@ -72,8 +72,8 @@ export async function getInterfaces(peerId?: string, seed?: string): Promise<voi
     const distributor = new Distributor([], seed);
     let client = await distributor.makeClient(DEFAULT_NODE)
 
-    let modules = await getInter(client);
-    console.log(modules)
+    let interfaces = await getInter(client);
+    console.log(JSON.stringify(interfaces, undefined, 2))
 }
 
 export async function distribute(seed?: string): Promise<void> {
