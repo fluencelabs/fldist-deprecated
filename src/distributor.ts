@@ -145,7 +145,7 @@ export class Distributor {
 		if (typeof this.innerClient == 'undefined' || this.innerClient.relayPeerId != node.peerId) {
 			console.log("client seed: " + this.seed);
 			console.log("client peerId: " + peerId.toB58String());
-			console.log("node peerId: " + node.peerId.toB58String());
+			console.log("node peerId: " + node.peerId);
 			this.innerClient = new FluenceClientImpl(peerId);
 			await this.innerClient.connect(node.multiaddr);
 		}
