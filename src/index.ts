@@ -26,7 +26,7 @@ export async function createService(blueprint_id: string, seed?: string): Promis
 
 export async function newService(
 	blueprint_name: string,
-	module_paths: { name: string; path: string }[],
+	module_configs: { config_path?: string; wasm_path: string }[],
 	seed?: string,
 ): Promise<void> {
 	const node = DEFAULT_NODE;
@@ -34,7 +34,7 @@ export async function newService(
 	const distributor = new Distributor([], seed);
 
 	// upload modules
-	const modules = await Promise.all(module_paths.map((m) => getModule(m.name, m.path)));
+	const modules = await Promise.all(module_configs.map(m => getModule(m.wasm_path, undefined, m.config_path)));
 	for (const module of modules) {
 		await distributor.uploadModuleToNode(node, module);
 	}
@@ -57,8 +57,8 @@ export async function runAir(path: string, data: Map<string, any>, seed?: string
 	await distributor.runAir(DEFAULT_NODE, air, data);
 }
 
-export async function uploadModule(name: string, path: string, configPath?: string, seed?: string): Promise<void> {
-	const module = await getModule(name, path, configPath);
+export async function uploadModule(path: string, name?: string, configPath?: string, seed?: string): Promise<void> {
+	const module = await getModule(path, name, configPath);
 	const distributor = new Distributor([], seed);
 	await distributor.uploadModuleToNode(DEFAULT_NODE, module);
 }

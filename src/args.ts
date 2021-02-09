@@ -55,13 +55,14 @@ type ConfigArgs = {
                     })
                     .option('n', {
                         alias: 'name',
-                        demandOption: true,
+                        demandOption: false,
                         describe: 'A name of a wasm module',
                         type: 'string'
                     })
+                    .conflicts('config', 'name')
             },
             handler: async (argv) => {
-                await uploadModule(argv.name as string, argv.path as string, argv.config as string, argv.seed as string)
+                await uploadModule(argv.path as string, argv.name as string, argv.config as string, argv.seed as string)
                 console.log("module uploaded successfully")
                 process.exit(0);
             }
@@ -174,13 +175,13 @@ type ConfigArgs = {
                     .option('ms', {
                         alias: 'modules',
                         demandOption: true,
-                        describe: 'name:path; name – import name of a module, path – path to a wasm module',
+                        describe: 'array of path:config pairs; meaning <path to wasm module>:<path to config>',
                         type: 'array'
                     })
                     .coerce('modules', (arg: string[]) => {
                         return arg.map(s => {
-                            const [name, path] = s.split(':');
-                            return { name, path };
+                            const [wasm_path, config_path] = s.split(':');
+                            return { wasm_path, config_path };
                         });
                     })
                     .option('n', {

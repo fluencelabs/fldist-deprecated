@@ -25,14 +25,16 @@ export async function loadModule(path: string): Promise<string> {
 	return data.toString('base64');
 }
 
-export async function getModule(name: string, path: string, configPath?: string): Promise<Module> {
+export async function getModule(path: string, name?: string, configPath?: string): Promise<Module> {
 	let config;
 	if (configPath) {
 		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
-	} else {
+	} else if (name) {
 		config = createConfig({ name })
+	} else {
+		throw new Error(`either --config or --name must be specified`)
 	}
-	return { base64: await loadModule(path), config:  config}
+	return { base64: await loadModule(path), config: config}
 }
 
 export async function getFileContent(path: string): Promise<string> {
