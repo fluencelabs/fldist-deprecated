@@ -3,7 +3,6 @@ import {
     addBlueprint,
     createService,
     runAir,
-    distribute,
     uploadModule,
     getModules,
     getInterfaces,
@@ -21,14 +20,6 @@ export function args() {
             demandOption: false,
             describe: 'Client seed',
             type: 'string'
-        })
-        .command({
-            command: 'distribute',
-            describe: 'Create services according to the distribution specified in the code',
-            handler: async (argv) => {
-                await distribute(argv.seed as string);
-                process.exit(0);
-            }
         })
         .command({
             command: 'upload',

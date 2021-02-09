@@ -3,12 +3,12 @@
 import log from 'loglevel';
 import { promises as fs } from 'fs';
 import { getInterfaces as getInter, getModules as getMod } from '@fluencelabs/fluence';
-import { dev } from '@fluencelabs/fluence-network-environment';
+import { testNet } from '@fluencelabs/fluence-network-environment';
 import { v4 as uuidv4 } from 'uuid';
 import { args } from './args';
 import { Distributor, getModule } from './distributor';
 
-const DEFAULT_NODE = dev[2];
+const DEFAULT_NODE = testNet[3];
 
 export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
 	const distributor = new Distributor([], seed);
@@ -86,12 +86,12 @@ export async function getInterfaces(peerId?: string, seed?: string, expand?: boo
 }
 
 export async function distribute(seed?: string): Promise<void> {
-	const distributor = new Distributor(dev, seed);
+	const distributor = new Distributor(testNet, seed);
 	await distributor.load_modules();
 	await distributor
 		.distributeServices(
 			// TODO make it configurable
-			dev[0],
+			testNet[0],
 			new Map([
 				['SQLite 3', [1, 2, 3, 4, 5]],
 				['User List', [1, 2, 3, 4, 5]],
