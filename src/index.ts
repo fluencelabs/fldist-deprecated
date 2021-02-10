@@ -7,100 +7,100 @@ import { testNet } from '@fluencelabs/fluence-network-environment';
 import { v4 as uuidv4 } from 'uuid';
 import { args } from './args';
 import { Distributor, getModule } from './distributor';
+import {Node} from '../lib/environments';
 
-const DEFAULT_NODE = testNet[3];
+const DEFAULT_NODE_IDX = 3;
 
-export async function addBlueprint(name: string, id: string, deps: string[], seed?: string): Promise<string> {
-	const distributor = new Distributor([], seed);
-	const bp = await distributor.uploadBlueprint(DEFAULT_NODE, { name, id, dependencies: deps });
-	return bp.id;
-}
+export class CliApi {
+	distributor: Distributor;
+	node: Node;
 
-export async function createService(blueprint_id: string, seed?: string): Promise<void> {
-	const node = DEFAULT_NODE;
-
-	const distributor = new Distributor([], seed);
-	const serviceId = await distributor.createService(node, blueprint_id);
-	console.log(`service id: ${serviceId}`);
-}
-
-export async function newService(
-	blueprint_name: string,
-	module_configs: { config_path?: string; wasm_path: string }[],
-	seed?: string,
-): Promise<void> {
-	const node = DEFAULT_NODE;
-
-	const distributor = new Distributor([], seed);
-
-	// upload modules
-	const modules = await Promise.all(module_configs.map(m => getModule(m.wasm_path, undefined, m.config_path)));
-	for (const module of modules) {
-		await distributor.uploadModuleToNode(node, module);
+	constructor(nodes: Node[], seed?: string, selected_node?: Node) {
+		this.distributor = new Distributor(nodes, seed);
+		this.node = selected_node ? selected_node : nodes[DEFAULT_NODE_IDX];
 	}
 
-	// create blueprints
-	const dependencies = modules.map((m) => m.config.name);
-	const blueprint = await distributor.uploadBlueprint(node, { name: blueprint_name, id: uuidv4(), dependencies });
-
-	// create service
-	const serviceId = await distributor.createService(node, blueprint.id);
-	console.log(`service id: ${serviceId}`);
-}
-
-export async function runAir(path: string, data: Map<string, any>, seed?: string): Promise<void> {
-	const distributor = new Distributor([], seed);
-
-	const fileData = await fs.readFile(path);
-	const air = fileData.toString('utf-8');
-
-	await distributor.runAir(DEFAULT_NODE, air, data);
-}
-
-export async function uploadModule(path: string, name?: string, configPath?: string, seed?: string): Promise<void> {
-	const module = await getModule(path, name, configPath);
-	const distributor = new Distributor([], seed);
-	await distributor.uploadModuleToNode(DEFAULT_NODE, module);
-}
-
-export async function getModules(peerId?: string, seed?: string): Promise<string[]> {
-	const distributor = new Distributor([], seed);
-	const client = await distributor.makeClient(DEFAULT_NODE);
-	if (!peerId) {
-		peerId = DEFAULT_NODE.peerId;
+	async addBlueprint(name: string, id: string, deps: string[]): Promise<string> {
+		const bp = await this.distributor.uploadBlueprint(this.node, {name, id, dependencies: deps});
+		return bp.id;
 	}
-	return await getMod(client);
-}
 
-export async function getInterfaces(peerId?: string, seed?: string, expand?: boolean): Promise<void> {
-	const distributor = new Distributor([], seed);
-	const client = await distributor.makeClient(DEFAULT_NODE);
+	async createService(blueprint_id: string): Promise<void> {
+		const node = this.node;
 
-	const interfaces = await getInter(client);
-	if (expand) {
-		console.log(JSON.stringify(interfaces, undefined, 2));
-	} else {
-		console.log(interfaces);
-		console.log('to expand interfaces, use get_interfaces --expand');
+		const serviceId = await this.distributor.createService(node, blueprint_id);
+		console.log(`service id: ${serviceId}`);
 	}
-}
 
-export async function distribute(seed?: string): Promise<void> {
-	const distributor = new Distributor(testNet, seed);
-	await distributor.load_modules();
-	await distributor
-		.distributeServices(
-			// TODO make it configurable
-			testNet[0],
-			new Map([
-				['SQLite 3', [1, 2, 3, 4, 5]],
-				['User List', [1, 2, 3, 4, 5]],
-				['Message History', [1, 2, 3, 4, 5]],
-				// ['Redis', [5,6,7,8]]
-				['URL Downloader', [1, 2, 3, 4, 5]],
-			]),
-		)
-		.then((_) => log.warn('finished'));
+	async newService(
+		blueprint_name: string,
+		module_configs: { config_path?: string; wasm_path: string }[],
+		seed?: string,
+	): Promise<void> {
+		const node = this.node;
+
+
+		// upload modules
+		const modules = await Promise.all(module_configs.map(m => getModule(m.wasm_path, undefined, m.config_path)));
+		for (const module of modules) {
+			await this.distributor.uploadModuleToNode(node, module);
+		}
+
+		// create blueprints
+		const dependencies = modules.map((m) => m.config.name);
+		const blueprint = await this.distributor.uploadBlueprint(node, {name: blueprint_name, id: uuidv4(), dependencies});
+
+		// create service
+		const serviceId = await this.distributor.createService(node, blueprint.id);
+		console.log(`service id: ${serviceId}`);
+	}
+
+	async runAir(path: string, data: Map<string, any>): Promise<void> {
+
+		const fileData = await fs.readFile(path);
+		const air = fileData.toString('utf-8');
+
+		await this.distributor.runAir(this.node, air, data);
+	}
+
+	async uploadModule(path: string, name?: string, configPath?: string): Promise<void> {
+		const module = await getModule(path, name, configPath);
+		await this.distributor.uploadModuleToNode(this.node, module);
+	}
+
+	async getModules(): Promise<string[]> {
+		const client = await this.distributor.makeClient(this.node);
+		return await getMod(client);
+	}
+
+	async getInterfaces(expand?: boolean): Promise<void> {
+		const client = await this.distributor.makeClient(this.node);
+
+		const interfaces = await getInter(client);
+		if (expand) {
+			console.log(JSON.stringify(interfaces, undefined, 2));
+		} else {
+			console.log(interfaces);
+			console.log('to expand interfaces, use get_interfaces --expand');
+		}
+	}
+
+	async distribute(seed?: string): Promise<void> {
+		await this.distributor.load_modules();
+		await this.distributor
+			.distributeServices(
+				// TODO make it configurable
+				testNet[0],
+				new Map([
+					['SQLite 3', [1, 2, 3, 4, 5]],
+					['User List', [1, 2, 3, 4, 5]],
+					['Message History', [1, 2, 3, 4, 5]],
+					// ['Redis', [5,6,7,8]]
+					['URL Downloader', [1, 2, 3, 4, 5]],
+				]),
+			)
+			.then((_) => log.warn('finished'));
+	}
 }
 
 if (typeof process === 'object') {
