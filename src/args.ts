@@ -23,13 +23,11 @@ export function args() {
 					break;
 			}
 			let node = undefined;
-			if (argv.node) {
-				node = nodes.find(n => n.peerId == argv.node)
-				if (!node) {
-					let environment = nodes.map(n => n.peerId).join("\n\t");
-					console.error(`Error:\n'--node ${argv.node}' doesn't belong to selected environment (${env}):\n\t${environment}`);
-					process.exit(1);
-				}
+			if (argv["node-id"] && argv["node-addr"]) {
+				node = {
+					peerId: argv["node-id"] as string,
+					multiaddr: argv["node-addr"] as string,
+				};
 			}
 			argv.api = new CliApi(nodes, argv.seed as string, node);
 		})
@@ -45,10 +43,15 @@ export function args() {
 			choices: ['dev', 'testnet'],
 			default: 'testnet',
 		})
-		.option('node', {
+		.option('node-id', {
 			demandOption: false,
 			describe: 'PeerId of the node to use',
 		})
+		.option('node-addr', {
+			demandOption: false,
+			describe: 'Multiaddr of the node to use'
+		})
+		.implies('node-id', 'node-addr')
 		.command({
 			command: 'upload',
 			describe: 'Upload selected wasm',
