@@ -26,7 +26,9 @@ export function args() {
 			if (argv.node) {
 				node = nodes.find(n => n.peerId == argv.node)
 				if (!node) {
-					throw new Error(`--node ${node} doesn't belong to selected environment (${env}):\n${JSON.stringify(nodes)}`)
+					let environment = nodes.map(n => n.peerId).join("\n\t");
+					console.error(`Error:\n'--node ${argv.node}' doesn't belong to selected environment (${env}):\n\t${environment}`);
+					process.exit(1);
 				}
 			}
 			argv.api = new CliApi(nodes, argv.seed as string, node);
@@ -241,6 +243,29 @@ type ConfigArgs = {
 			},
 			handler: async (argv) => {
 				await (argv.api as CliApi).runAir(argv.path as string, argv.data as Map<string, any>);
+			}
+		})
+		.command({
+			command: 'env',
+			describe: 'show nodes in currently selected environment',
+			builder: (yargs) => {
+				return yargs
+					.option('json', {
+						demandOption: false,
+						describe: 'if specified, output environment as JSON',
+						type: 'boolean',
+						default: false
+					})
+			},
+			handler: (argv) => {
+				let api = argv.api as CliApi;
+				if (argv.json) {
+					console.log(JSON.stringify(api.distributor.nodes, undefined, 2));
+				} else {
+					let env = api.distributor.nodes.map(n => n.multiaddr).join("\n");
+					console.log(env)
+				}
+				process.exit(0);
 			}
 		})
 		.parse();
