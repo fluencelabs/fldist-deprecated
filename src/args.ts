@@ -289,5 +289,11 @@ type ConfigArgs = {
 				process.exit(0);
 			}
 		})
+		.fail(function (msg, err, yargs) {
+			console.error('Something went wrong!')
+			if (msg) console.error(msg)
+			console.error(err)
+			process.exit(1)
+		})
 		.parse();
 }
