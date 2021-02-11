@@ -6,7 +6,7 @@ import {
 	createService as fluenceCreateService,
 	generatePeerId, peerIdToSeed,
 	seedToPeerId,
-	uploadModule
+	uploadModule,
 } from "@fluencelabs/fluence";
 import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClientImpl";
 import {v4 as uuidv4} from 'uuid';
@@ -156,12 +156,12 @@ export class Distributor {
 
 	async uploadModuleToNode(node: Node, module: Module) {
 		const client = await this.makeClient(node);
-		log.warn(
+		log.debug(
 			`uploading module ${module.config.name} to node ${
 				node.peerId
 			} via client ${client.selfPeerId} with config:`,
 		);
-		log.warn(JSON.stringify(module.config, undefined, 2))
+		log.debug(JSON.stringify(module.config, undefined, 2))
 
 		await uploadModule(client, module.config.name, module.base64, module.config);
 	}

@@ -1,3 +1,4 @@
+import log, {LogLevelDesc} from 'loglevel';
 import yargs from "yargs";
 import {
 	CliApi
@@ -10,8 +11,12 @@ const {hideBin} = require('yargs/helpers')
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
-		.global(['seed', 'env'])
+		.global(['seed', 'env', 'node-id', 'node-addr', 'log'])
 		.middleware((argv) => {
+			let logLevel = argv.log as LogLevelDesc;
+			log.setLevel(logLevel);
+			log.trace("test trace");
+
 			let env = argv.env as 'dev' | 'testnet';
 			let nodes;
 			switch (env) {
@@ -50,6 +55,12 @@ export function args() {
 		.option('node-addr', {
 			demandOption: false,
 			describe: 'Multiaddr of the node to use'
+		})
+		.option('log', {
+			demandOption: true,
+			describe: 'log level',
+			choices: ['trace', 'debug', 'info', 'warn', 'error'],
+			default: 'info'
 		})
 		.implies('node-id', 'node-addr')
 		.command({

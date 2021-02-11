@@ -65,6 +65,7 @@ export class CliApi {
 
 	async uploadModule(path: string, name?: string, configPath?: string): Promise<void> {
 		const module = await getModule(path, name, configPath);
+		log.debug(`resolved module: ${module}, will upload it to node ${this.node}`);
 		await this.distributor.uploadModuleToNode(this.node, module);
 	}
 
@@ -104,7 +105,5 @@ export class CliApi {
 }
 
 if (typeof process === 'object') {
-	log.setLevel('warn');
-
 	args();
 }
