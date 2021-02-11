@@ -15,8 +15,8 @@ export class CliApi {
 	distributor: Distributor;
 	node: Node;
 
-	constructor(nodes: Node[], seed?: string, selected_node?: Node) {
-		this.distributor = new Distributor(nodes, seed);
+	constructor(nodes: Node[], ttl: number, seed?: string, selected_node?: Node) {
+		this.distributor = new Distributor(nodes, ttl, seed);
 		this.node = selected_node ? selected_node : nodes[DEFAULT_NODE_IDX];
 	}
 

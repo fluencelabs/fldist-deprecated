@@ -11,7 +11,7 @@ const {hideBin} = require('yargs/helpers')
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
-		.global(['seed', 'env', 'node-id', 'node-addr', 'log'])
+		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
@@ -34,7 +34,8 @@ export function args() {
 					multiaddr: argv["node-addr"] as string,
 				};
 			}
-			argv.api = new CliApi(nodes, argv.seed as string, node);
+			let ttl = argv.ttl as number;
+			argv.api = new CliApi(nodes, ttl, argv.seed as string, node);
 		})
 		.option('s', {
 			alias: 'seed',
@@ -61,6 +62,12 @@ export function args() {
 			describe: 'log level',
 			choices: ['trace', 'debug', 'info', 'warn', 'error'],
 			default: 'info'
+		})
+		.option('ttl', {
+			demandOption: true,
+			describe: 'particle time to live in ms',
+			type: 'number',
+			default: '60000'
 		})
 		.implies('node-id', 'node-addr')
 		.command({
