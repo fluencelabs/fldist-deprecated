@@ -15,7 +15,6 @@ export function args() {
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
-			log.trace("test trace");
 
 			let env = argv.env as 'dev' | 'testnet';
 			let nodes;
