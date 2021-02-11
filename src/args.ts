@@ -33,6 +33,7 @@ export function args() {
 					multiaddr: argv["node-addr"] as string,
 				};
 			}
+			console.log(`argv.ttl: ${argv.ttl} | as number + 1 : ${argv.ttl as number + 1}`);
 			let ttl = argv.ttl as number;
 			argv.api = new CliApi(nodes, ttl, argv.seed as string, node);
 		})
