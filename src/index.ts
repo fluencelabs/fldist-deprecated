@@ -3,11 +3,10 @@
 import log from 'loglevel';
 import { promises as fs } from 'fs';
 import { getInterfaces as getInter, getModules as getMod } from '@fluencelabs/fluence';
-import { testNet } from '@fluencelabs/fluence-network-environment';
+import {Node, testNet} from '@fluencelabs/fluence-network-environment';
 import { v4 as uuidv4 } from 'uuid';
 import { args } from './args';
 import { Distributor, getModule } from './distributor';
-import {Node} from '../lib/environments';
 
 const DEFAULT_NODE_IDX = 3;
 
