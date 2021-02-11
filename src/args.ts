@@ -66,7 +66,7 @@ export function args() {
 			demandOption: true,
 			describe: 'particle time to live in ms',
 			type: 'number',
-			default: '60000'
+			default: 60000
 		})
 		.implies('node-id', 'node-addr')
 		.command({
