@@ -24,12 +24,13 @@
   },
   "scripts": {
     "tsc": "tsc --noImplicitUseStrict",
-    "cli": "tsc && node -r esm -r ts-node/register dist/index.js",
+    "cli": "node -r ts-node/register src/index.ts",
     "clean": "(rm -r ./dist || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "test": "mocha",
-    "build": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/@fluencelabs/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
+    "build": "npm run clean && npm run tsc",
+    "build_": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/@fluencelabs/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
   },
   "devDependencies": {
     "@types/chai": "^4.1.6",
