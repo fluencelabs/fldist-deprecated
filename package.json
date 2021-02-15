@@ -1,6 +1,6 @@
 {
   "name": "@fluencelabs/fldist",
-  "version": "0.2.1",
+  "version": "0.2.7",
   "keywords": [
     "typescript",
     "template"
@@ -24,12 +24,13 @@
   },
   "scripts": {
     "tsc": "tsc --noImplicitUseStrict",
-    "cli": "tsc && node -r esm -r ts-node/register dist/index.js",
+    "cli": "node -r ts-node/register src/index.ts",
     "clean": "(rm -r ./dist || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "test": "mocha",
-    "build": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/@fluencelabs/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
+    "build": "npm run clean && npm run tsc",
+    "build_": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/@fluencelabs/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
   },
   "devDependencies": {
     "@types/chai": "^4.1.6",
@@ -55,7 +56,7 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@fluencelabs/fluence": "0.9.16",
+    "@fluencelabs/fluence": "0.9.20",
     "@fluencelabs/fluence-network-environment": "1.0.8",
     "esm": "^3.2.25",
     "loglevel": "^1.7.1",

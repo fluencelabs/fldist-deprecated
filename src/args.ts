@@ -1,3 +1,4 @@
+import log, {LogLevelDesc} from 'loglevel';
 import yargs from "yargs";
 import {
 	CliApi
@@ -10,8 +11,11 @@ const {hideBin} = require('yargs/helpers')
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
-		.global(['seed', 'env'])
+		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
 		.middleware((argv) => {
+			let logLevel = argv.log as LogLevelDesc;
+			log.setLevel(logLevel);
+
 			let env = argv.env as 'dev' | 'testnet';
 			let nodes;
 			switch (env) {
@@ -29,7 +33,9 @@ export function args() {
 					multiaddr: argv["node-addr"] as string,
 				};
 			}
-			argv.api = new CliApi(nodes, argv.seed as string, node);
+			console.log(`argv.ttl: ${argv.ttl} | as number + 1 : ${argv.ttl as number + 1}`);
+			let ttl = argv.ttl as number;
+			argv.api = new CliApi(nodes, ttl, argv.seed as string, node);
 		})
 		.option('s', {
 			alias: 'seed',
@@ -50,6 +56,18 @@ export function args() {
 		.option('node-addr', {
 			demandOption: false,
 			describe: 'Multiaddr of the node to use'
+		})
+		.option('log', {
+			demandOption: true,
+			describe: 'log level',
+			choices: ['trace', 'debug', 'info', 'warn', 'error'],
+			default: 'info'
+		})
+		.option('ttl', {
+			demandOption: true,
+			describe: 'particle time to live in ms',
+			type: 'number',
+			default: 60000
 		})
 		.implies('node-id', 'node-addr')
 		.command({
@@ -270,6 +288,12 @@ type ConfigArgs = {
 				}
 				process.exit(0);
 			}
+		})
+		.fail(function (msg, err, yargs) {
+			console.error('Something went wrong!')
+			if (msg) console.error(msg)
+			console.error(err)
+			process.exit(1)
 		})
 		.parse();
 }
