@@ -3,7 +3,7 @@ import yargs, {Arguments} from "yargs";
 import {
 	CliApi
 } from "./index";
-import {generatePeerId, peerIdToSeed} from "@fluencelabs/fluence";
+import {generatePeerId, peerIdToSeed, setLogLevel} from "@fluencelabs/fluence";
 import {testNet, dev, Node} from '@fluencelabs/fluence-network-environment';
 
 const {hideBin} = require('yargs/helpers')
@@ -32,6 +32,7 @@ export function args() {
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
+			setLogLevel(logLevel);
 
 			let env = argv.env as 'dev' | 'testnet';
 			let nodes;

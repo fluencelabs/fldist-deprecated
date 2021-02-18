@@ -7,7 +7,7 @@
    (call relay (provider "get_status")
          [] status)
    (seq
-    (call %init_peer_id% (returnService "") [status])
+    (call %init_peer_id% (returnService "run") [status])
     (seq
      (call relay ("op" "identity") [])
      (seq
@@ -15,4 +15,4 @@
             [relay provider "get_status" json_path])
       (seq
        (call relay (verifier "is_authorized") [status.$.["is_registered"]] res)
-       (call %init_peer_id% (returnService "") [status.$.["is_registered"] res]))))))))
+       (call %init_peer_id% (returnService "run") [status.$.["is_registered"] res]))))))))
