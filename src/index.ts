@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env node
 
 import log from 'loglevel';
 import { promises as fs } from 'fs';
@@ -34,10 +34,8 @@ export class CliApi {
 	async newService(
 		blueprint_name: string,
 		module_configs: { config_path?: string; wasm_path: string }[],
-		seed?: string,
 	): Promise<void> {
 		const node = this.node;
-
 
 		// upload modules
 		const modules = await Promise.all(module_configs.map(m => getModule(m.wasm_path, undefined, m.config_path)));
@@ -84,7 +82,7 @@ export class CliApi {
 		}
 	}
 
-	async distribute(seed?: string): Promise<void> {
+	async distribute(): Promise<void> {
 		await this.distributor.load_modules();
 		await this.distributor
 			.distributeServices(

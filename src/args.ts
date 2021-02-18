@@ -1,12 +1,29 @@
 import log, {LogLevelDesc} from 'loglevel';
-import yargs from "yargs";
+import yargs, {Arguments} from "yargs";
 import {
 	CliApi
 } from "./index";
 import {generatePeerId, peerIdToSeed} from "@fluencelabs/fluence";
-import {testNet, dev} from '@fluencelabs/fluence-network-environment';
+import {testNet, dev, Node} from '@fluencelabs/fluence-network-environment';
 
 const {hideBin} = require('yargs/helpers')
+
+function isString(x: any): x is string {
+	return typeof x === "string";
+}
+
+function defined<T>(x: T | undefined): x is T {
+	return typeof x != "undefined";
+}
+
+function maybeString(argv: Arguments<{}>, key: string): string | undefined {
+	let value = argv[key];
+	if (isString(value)) {
+		return value;
+	}
+
+	return undefined;
+}
 
 export function args() {
 	return yargs(hideBin(process.argv))
@@ -26,14 +43,24 @@ export function args() {
 					nodes = testNet;
 					break;
 			}
-			let node = undefined;
-			if (argv["node-id"] && argv["node-addr"]) {
+
+			let node: Node | undefined = undefined;
+			let node_id = maybeString(argv, "node-id");
+			let node_addr = maybeString(argv, "node-addr");
+			if (defined(node_id) && defined(node_addr)) {
 				node = {
-					peerId: argv["node-id"] as string,
-					multiaddr: argv["node-addr"] as string,
+					peerId: node_id,
+					multiaddr: node_addr,
 				};
+			} else if (defined(node_id)) {
+				node = nodes.find(n => n.peerId === node_id)
+				if (!defined(node)) {
+					let environment = nodes.map(n => n.peerId).join("\n\t");
+					console.error(`Error:\n'--node ${node_id}' doesn't belong to selected environment (${env}):\n\t${environment}`);
+					process.exit(1);
+				}
 			}
-			console.log(`argv.ttl: ${argv.ttl} | as number + 1 : ${argv.ttl as number + 1}`);
+
 			let ttl = argv.ttl as number;
 			argv.api = new CliApi(nodes, ttl, argv.seed as string, node);
 		})
@@ -50,6 +77,7 @@ export function args() {
 			default: 'testnet',
 		})
 		.option('node-id', {
+			alias: 'node',
 			demandOption: false,
 			describe: 'PeerId of the node to use',
 		})
@@ -69,7 +97,6 @@ export function args() {
 			type: 'number',
 			default: 60000
 		})
-		.implies('node-id', 'node-addr')
 		.command({
 			command: 'upload',
 			describe: 'Upload selected wasm',
@@ -231,7 +258,7 @@ type ConfigArgs = {
 			builder: (yargs) => {
 				return yargs
 			},
-			handler: async (argv) => {
+			handler: async _ => {
 				let peerId = await generatePeerId();
 				console.log({
 					...peerId.toJSON(),
@@ -289,7 +316,7 @@ type ConfigArgs = {
 				process.exit(0);
 			}
 		})
-		.fail(function (msg, err, yargs) {
+		.fail(function (msg, err) {
 			console.error('Something went wrong!')
 			if (msg) console.error(msg)
 			console.error(err)
