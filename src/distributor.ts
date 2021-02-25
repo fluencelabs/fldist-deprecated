@@ -203,7 +203,7 @@ export class Distributor {
 			return {}
 		})
 
-		let particleId = await client.sendScript(air, data, this.ttl)
+		let particleId = await client.sendScript(air, data, this.ttl);
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
 		return particleId
 	}
