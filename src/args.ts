@@ -29,6 +29,8 @@ export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
 		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
+		.completion()
+		.strict()
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
