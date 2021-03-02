@@ -2,7 +2,6 @@
 
 import log from 'loglevel';
 import { promises as fs } from 'fs';
-import { getInterfaces as getInter, getModules as getMod } from '@fluencelabs/fluence';
 import {Node, testNet} from '@fluencelabs/fluence-network-environment';
 import { v4 as uuidv4 } from 'uuid';
 import { args } from './args';
@@ -66,14 +65,11 @@ export class CliApi {
 	}
 
 	async getModules(): Promise<string[]> {
-		const client = await this.distributor.makeClient(this.node);
-		return await getMod(client);
+		return await this.distributor.getModules(this.node)
 	}
 
 	async getInterfaces(expand?: boolean): Promise<void> {
-		const client = await this.distributor.makeClient(this.node);
-
-		const interfaces = await getInter(client);
+		const interfaces = await this.distributor.getInterfaces(this.node);
 		if (expand) {
 			console.log(JSON.stringify(interfaces, undefined, 2));
 		} else {

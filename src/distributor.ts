@@ -12,6 +12,7 @@ import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClien
 import {v4 as uuidv4} from 'uuid';
 import {Node} from "@fluencelabs/fluence-network-environment";
 import {ModuleConfig} from "@fluencelabs/fluence/dist/internal/moduleConfig";
+import { getInterfaces as getInter, getModules as getMod } from '@fluencelabs/fluence';
 
 type Module = {
 	base64: string;
@@ -184,8 +185,18 @@ export class Distributor {
 
 	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
-		log.warn(`creating service ${bpId}`);
 		return await fluenceCreateService(client, bpId, node.peerId, this.ttl)
+	}
+
+	async getModules(node: Node): Promise<string[]> {
+		const client = await this.makeClient(node);
+		return await getMod(client, this.ttl)
+	}
+
+	async getInterfaces(node: Node): Promise<string[]> {
+		const client = await this.makeClient(node);
+		console.log(this.ttl)
+		return await getInter(client, this.ttl)
 	}
 
 	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
