@@ -51,6 +51,15 @@ export function args() {
 			let node_id = maybeString(argv, "node-id");
 			let node_addr = maybeString(argv, "node-addr");
 			if (defined(node_id) && defined(node_addr)) {
+				let splitted = node_addr.split("/");
+				let last = splitted[splitted.length - 1];
+				let penult = splitted[splitted.length - 2];
+				if (!last.startsWith("12D3") && !penult.startsWith("12D3")) {
+					// add node_id to multiaddr if there is no peer_id in multiaddr
+					splitted.push("p2p");
+					splitted.push(node_id);
+					node_addr = splitted.join("/");
+				}
 				node = {
 					peerId: node_id,
 					multiaddr: node_addr,
