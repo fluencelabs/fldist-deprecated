@@ -78,6 +78,16 @@ export class CliApi {
 		}
 	}
 
+	async getInterface(serviceId: string, expand?: boolean): Promise<void> {
+		const interfaceS = await this.distributor.getInterface(serviceId, this.node);
+		if (expand) {
+			console.log(JSON.stringify(interfaceS, undefined, 2));
+		} else {
+			console.log(interfaceS);
+			console.log('to expand interfaces, use get_interfaces --expand');
+		}
+	}
+
 	async distribute(): Promise<void> {
 		await this.distributor.load_modules();
 		await this.distributor

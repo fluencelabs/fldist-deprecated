@@ -4,8 +4,8 @@ import {promises as fs} from "fs";
 import {
 	addBlueprint,
 	createService as fluenceCreateService,
-	generatePeerId, peerIdToSeed,
-	seedToPeerId,
+	generatePeerId, Particle, peerIdToSeed,
+	seedToPeerId, sendParticleAsFetch,
 	uploadModule,
 } from "@fluencelabs/fluence";
 import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClientImpl";
@@ -197,6 +197,26 @@ export class Distributor {
 		const client = await this.makeClient(node);
 		console.log(this.ttl)
 		return await getInter(client, this.ttl)
+	}
+
+	async getInterface(serviceId: string, node: Node): Promise<string[]> {
+		const client = await this.makeClient(node);
+		let callbackFn = 'getInterface';
+		let script = `
+            (seq
+                (call relay ("srv" "get_interface") [serviceId] interface)
+                (call myPeerId ("_callback" "${callbackFn}") [interface])
+            )
+        `
+		let data = {
+			relay: client.relayPeerId,
+			myPeerId: client.selfPeerId,
+			serviceId: serviceId
+		};
+		let particle = new Particle(script, data, this.ttl)
+
+		const [res] = await sendParticleAsFetch<[string[]]>(client, particle, callbackFn);
+		return res;
 	}
 
 	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
