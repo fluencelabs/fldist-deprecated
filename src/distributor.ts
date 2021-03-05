@@ -3,6 +3,7 @@ import promiseRetry from 'promise-retry';
 import {promises as fs} from "fs";
 import {
 	addBlueprint,
+	createClient,
 	createService as fluenceCreateService,
 	generatePeerId,
 	getInterfaces as getInter,
@@ -11,9 +12,11 @@ import {
 	peerIdToSeed,
 	seedToPeerId,
 	sendParticleAsFetch,
+	subscribeToEvent,
 	uploadModule,
+	FluenceClient,
+	sendParticle
 } from "@fluencelabs/fluence";
-import {FluenceClientImpl} from "@fluencelabs/fluence/dist/internal/FluenceClientImpl";
 import {v4 as uuidv4} from 'uuid';
 import {Node} from "@fluencelabs/fluence-network-environment";
 import {ModuleConfig} from "@fluencelabs/fluence/dist/internal/moduleConfig";
@@ -79,7 +82,7 @@ export class Distributor {
 	modules: Module[];
 
 	// If innerClient is set, it will be used for all requests. Otherwise, a new client will be generated on each request.
-	innerClient?: FluenceClientImpl;
+	innerClient?: FluenceClient;
 	// Seed of the private key of the used PeerId
 	seed?: string;
 
@@ -142,7 +145,7 @@ export class Distributor {
 		];
 	}
 
-	async makeClient(node: Node): Promise<FluenceClientImpl> {
+	async makeClient(node: Node): Promise<FluenceClient> {
 		let peerId;
 		if (this.seed) {
 			peerId = await seedToPeerId(this.seed)
@@ -154,8 +157,7 @@ export class Distributor {
 			console.log("client seed: " + this.seed);
 			console.log("client peerId: " + peerId.toB58String());
 			console.log("node peerId: " + node.peerId);
-			this.innerClient = new FluenceClientImpl(peerId);
-			await this.innerClient.connect(node.multiaddr);
+			this.innerClient = await createClient(node.multiaddr, peerId);
 		}
 		return this.innerClient;
 	}
@@ -222,15 +224,15 @@ export class Distributor {
 		data.set("returnService", returnService);
 		data.set("relay", node.peerId);
 
-		client.registerCallback(returnService, "run", (args, tetraplets) => {
+		subscribeToEvent(client, returnService, "run", (args, tetraplets) => {
 			console.log("===================")
 			console.log(JSON.stringify(args, undefined, 2))
 			console.log(tetraplets)
 			console.log("===================")
 			return {}
-		})
+		});
 
-		let particleId = await client.sendScript(air, data, this.ttl);
+		let particleId = await sendParticle(client, new Particle(air, data, this.ttl));
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
 		return particleId
 	}
