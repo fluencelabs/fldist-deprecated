@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import log from 'loglevel';
-import { promises as fs } from 'fs';
+import {promises as fs} from 'fs';
 import {Node, testNet} from '@fluencelabs/fluence-network-environment';
-import { v4 as uuidv4 } from 'uuid';
-import { args } from './args';
-import { Distributor, getModule } from './distributor';
+import {v4 as uuidv4} from 'uuid';
+import {args} from './args';
+import {Distributor, getModule} from './distributor';
 
 const DEFAULT_NODE_IDX = 3;
 
@@ -18,9 +18,8 @@ export class CliApi {
 		this.node = selected_node ? selected_node : nodes[DEFAULT_NODE_IDX];
 	}
 
-	async addBlueprint(name: string, id: string, deps: string[]): Promise<string> {
-		const bp = await this.distributor.uploadBlueprint(this.node, {name, id, dependencies: deps});
-		return bp.id;
+	async addBlueprint(name: string, deps: string[]): Promise<string> {
+		return await this.distributor.uploadBlueprint(this.node, {name, dependencies: deps});
 	}
 
 	async createService(blueprint_id: string): Promise<void> {
@@ -44,10 +43,10 @@ export class CliApi {
 
 		// create blueprints
 		const dependencies = modules.map((m) => m.config.name);
-		const blueprint = await this.distributor.uploadBlueprint(node, {name: blueprint_name, id: uuidv4(), dependencies});
+		const blueprintId = await this.distributor.uploadBlueprint(node, {name: blueprint_name, id: uuidv4(), dependencies});
 
 		// create service
-		const serviceId = await this.distributor.createService(node, blueprint.id);
+		const serviceId = await this.distributor.createService(node, blueprintId);
 		console.log(`service id: ${serviceId}`);
 	}
 
