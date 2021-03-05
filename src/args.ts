@@ -30,6 +30,7 @@ export function args() {
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
 		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
 		.completion()
+		.demandCommand()
 		.strict()
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
@@ -343,6 +344,12 @@ type ConfigArgs = {
 					console.log(env)
 				}
 				process.exit(0);
+			}
+		})
+		.command({
+			command: '*',
+			handler() {
+			  yargs.showHelp()
 			}
 		})
 		.fail(function (msg, err) {
