@@ -1,0 +1,38 @@
+{
+    "services": [
+        {
+            "name": "history",
+            "dependencies": [
+                "history-inmemory"
+            ]
+        },
+        {
+            "name": "userlist",
+            "dependencies": [
+                "user-list-inmemory"
+            ]
+        }
+    ],
+    "modules": [
+        {
+            "import_name": "history-inmemory",
+            "file": "history.wasm"
+        },
+        {
+            "import_name": "user-list-inmemory",
+            "file": "user-list.wasm"
+        }
+    ],
+    "scripts": [
+        {
+            "name": "set_tetraplet",
+            "file": "set_tetraplet.air"
+        }
+    ],
+    "script_storage": [
+        {
+            "name": "remove_disconnected",
+            "file": "remove_disconnected.air"
+        }
+    ]
+}

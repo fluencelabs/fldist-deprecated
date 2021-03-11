@@ -5,6 +5,7 @@ import {
 } from "./index";
 import {generatePeerId, peerIdToSeed, setLogLevel} from "@fluencelabs/fluence";
 import {testNet, dev, Node} from '@fluencelabs/fluence-network-environment';
+import deployApp from './deployApp';
 
 const {hideBin} = require('yargs/helpers')
 
@@ -25,10 +26,21 @@ function maybeString(argv: Arguments<{}>, key: string): string | undefined {
 	return undefined;
 }
 
+/* to run node in the local docker container
+docker run --rm -e RUST_LOG="info" -p 1210:1210 -p 4310:4310 fluencelabs/fluence -t 1210 -w 4310 -k gKdiCSUr1TFGFEgu2t8Ch1XEUsrN5A2UfBLjSZvfci9SPR3NvZpACfcpPGC3eY4zma1pk7UvYv5zb1VjvPHwCjj
+*/
+const local = [
+	{
+		multiaddr: '/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3',
+		peerId: '12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3',
+	},
+];
+
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
 		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
+		.scriptName('fldist')
 		.completion()
 		.demandCommand()
 		.strict()
@@ -37,9 +49,12 @@ export function args() {
 			log.setLevel(logLevel);
 			setLogLevel(logLevel);
 
-			let env = argv.env as 'dev' | 'testnet';
+			let env = argv.env as 'dev' | 'testnet' | 'local';
 			let nodes;
 			switch (env) {
+				case 'local':
+					nodes = local;
+					break;
 				case 'dev':
 					nodes = dev;
 					break;
@@ -282,6 +297,7 @@ type ConfigArgs = {
 				process.exit(0);
 			}
 		})
+		.command(deployApp)
 		.command({
 			command: 'create_keypair',
 			describe: 'Generates a random keypair',
