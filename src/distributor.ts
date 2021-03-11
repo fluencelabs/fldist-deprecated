@@ -1,6 +1,6 @@
 import log from 'loglevel';
 import promiseRetry from 'promise-retry';
-import {promises as fs} from "fs";
+import { promises as fs } from 'fs';
 import {
 	addBlueprint,
 	createClient,
@@ -15,11 +15,11 @@ import {
 	subscribeToEvent,
 	uploadModule,
 	FluenceClient,
-	sendParticle
-} from "@fluencelabs/fluence";
-import {v4 as uuidv4} from 'uuid';
-import {Node} from "@fluencelabs/fluence-network-environment";
-import {ModuleConfig} from "@fluencelabs/fluence/dist/internal/moduleConfig";
+	sendParticle,
+} from '@fluencelabs/fluence';
+import { v4 as uuidv4 } from 'uuid';
+import { Node } from '@fluencelabs/fluence-network-environment';
+import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
 
 type Module = {
 	base64: string;
@@ -36,11 +36,11 @@ export async function getModule(path: string, name?: string, configPath?: string
 	if (configPath) {
 		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
 	} else if (name) {
-		config = createConfig({ name })
+		config = createConfig({ name });
 	} else {
-		throw new Error(`either --config or --name must be specified`)
+		throw new Error(`either --config or --name must be specified`);
 	}
-	return { base64: await loadModule(path), config: config}
+	return { base64: await loadModule(path), config: config };
 }
 
 export async function getFileContent(path: string): Promise<string> {
@@ -49,7 +49,7 @@ export async function getFileContent(path: string): Promise<string> {
 }
 
 type Blueprint = {
-	id?: string
+	id?: string;
 	name: string;
 	dependencies: string[];
 };
@@ -128,11 +128,19 @@ export class Distributor {
 		this.modules = [
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
-				config: createConfig({ name: 'curl_adapter', mountedBinaries: { curl: '/usr/bin/curl' }, preopenedFiles: ['/tmp'] }),
+				config: createConfig({
+					name: 'curl_adapter',
+					mountedBinaries: { curl: '/usr/bin/curl' },
+					preopenedFiles: ['/tmp'],
+				}),
 			},
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
-				config: createConfig({ name: 'local_storage', preopenedFiles: ['/tmp'], mappedDirs: { sites: '/tmp' } }),
+				config: createConfig({
+					name: 'local_storage',
+					preopenedFiles: ['/tmp'],
+					mappedDirs: { sites: '/tmp' },
+				}),
 			},
 			{
 				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
@@ -148,15 +156,15 @@ export class Distributor {
 	async makeClient(node: Node): Promise<FluenceClient> {
 		let peerId;
 		if (this.seed) {
-			peerId = await seedToPeerId(this.seed)
+			peerId = await seedToPeerId(this.seed);
 		} else {
 			peerId = await generatePeerId();
 			this.seed = peerIdToSeed(peerId);
 		}
 		if (typeof this.innerClient == 'undefined' || this.innerClient.relayPeerId != node.peerId) {
-			console.log("client seed: " + this.seed);
-			console.log("client peerId: " + peerId.toB58String());
-			console.log("node peerId: " + node.peerId);
+			console.log('client seed: ' + this.seed);
+			console.log('client peerId: ' + peerId.toB58String());
+			console.log('node peerId: ' + node.peerId);
 			this.innerClient = await createClient(node.multiaddr, peerId);
 		}
 		return this.innerClient;
@@ -165,11 +173,9 @@ export class Distributor {
 	async uploadModuleToNode(node: Node, module: Module) {
 		const client = await this.makeClient(node);
 		log.debug(
-			`uploading module ${module.config.name} to node ${
-				node.peerId
-			} via client ${client.selfPeerId} with config:`,
+			`uploading module ${module.config.name} to node ${node.peerId} via client ${client.selfPeerId} with config:`,
 		);
-		log.debug(JSON.stringify(module.config, undefined, 2))
+		log.debug(JSON.stringify(module.config, undefined, 2));
 
 		await uploadModule(client, module.config.name, module.base64, module.config, this.ttl);
 	}
@@ -183,18 +189,18 @@ export class Distributor {
 
 	async createService(node: Node, bpId: string): Promise<string> {
 		const client = await this.makeClient(node);
-		return await fluenceCreateService(client, bpId, node.peerId, this.ttl)
+		return await fluenceCreateService(client, bpId, node.peerId, this.ttl);
 	}
 
 	async getModules(node: Node): Promise<string[]> {
 		const client = await this.makeClient(node);
-		return await getMod(client, this.ttl)
+		return await getMod(client, this.ttl);
 	}
 
 	async getInterfaces(node: Node): Promise<string[]> {
 		const client = await this.makeClient(node);
-		console.log(this.ttl)
-		return await getInter(client, this.ttl)
+		console.log(this.ttl);
+		return await getInter(client, this.ttl);
 	}
 
 	async getInterface(serviceId: string, node: Node): Promise<string[]> {
@@ -205,13 +211,13 @@ export class Distributor {
                 (call relay ("srv" "get_interface") [serviceId] interface)
                 (call myPeerId ("_callback" "${callbackFn}") [interface])
             )
-        `
+        `;
 		let data = {
 			relay: client.relayPeerId,
 			myPeerId: client.selfPeerId,
-			serviceId: serviceId
+			serviceId: serviceId,
 		};
-		let particle = new Particle(script, data, this.ttl)
+		let particle = new Particle(script, data, this.ttl);
 
 		const [res] = await sendParticleAsFetch<[string[]]>(client, particle, callbackFn);
 		return res;
@@ -219,22 +225,22 @@ export class Distributor {
 
 	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
 		const client = await this.makeClient(node);
-		let returnService = uuidv4()
+		let returnService = uuidv4();
 
-		data.set("returnService", returnService);
-		data.set("relay", node.peerId);
+		data.set('returnService', returnService);
+		data.set('relay', node.peerId);
 
-		subscribeToEvent(client, returnService, "run", (args, tetraplets) => {
-			console.log("===================")
-			console.log(JSON.stringify(args, undefined, 2))
-			console.log(tetraplets)
-			console.log("===================")
-			return {}
+		subscribeToEvent(client, returnService, 'run', (args, tetraplets) => {
+			console.log('===================');
+			console.log(JSON.stringify(args, undefined, 2));
+			console.log(tetraplets);
+			console.log('===================');
+			return {};
 		});
 
 		let particleId = await sendParticle(client, new Particle(air, data, this.ttl));
-		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`)
-		return particleId
+		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
+		return particleId;
 	}
 
 	async uploadAllModules(node: Node) {
@@ -281,7 +287,7 @@ export class Distributor {
 			if (!already) {
 				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node, bp));
 				uploadedBlueprints.add([node, bp.name]);
-				return {...bp, id: blueprint};
+				return { ...bp, id: blueprint };
 			}
 
 			return bp;
@@ -309,14 +315,10 @@ export class Distributor {
 				}
 				const bp = await uploadB(this, node, blueprint);
 				if (!bp.id) {
-					throw new Error(`Blurptin should be with id to create a service`)
+					throw new Error(`Blurptin should be with id to create a service`);
 				}
 				let serviceId = await this.createService(node, bp.id);
-				log.warn(
-					`service created ${serviceId} as instance of ${bp.name}@${
-						bp.id
-					}`
-				);
+				log.warn(`service created ${serviceId} as instance of ${bp.name}@${bp.id}`);
 			}
 		}
 	}

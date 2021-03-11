@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import log from 'loglevel';
-import {promises as fs} from 'fs';
-import {Node, testNet} from '@fluencelabs/fluence-network-environment';
-import {v4 as uuidv4} from 'uuid';
-import {args} from './args';
-import {Distributor, getModule} from './distributor';
+import { promises as fs } from 'fs';
+import { Node, testNet } from '@fluencelabs/fluence-network-environment';
+import { v4 as uuidv4 } from 'uuid';
+import { args } from './args';
+import { Distributor, getModule } from './distributor';
 
 const DEFAULT_NODE_IDX = 3;
 
@@ -19,7 +19,7 @@ export class CliApi {
 	}
 
 	async addBlueprint(name: string, deps: string[]): Promise<string> {
-		return await this.distributor.uploadBlueprint(this.node, {name, dependencies: deps});
+		return await this.distributor.uploadBlueprint(this.node, { name, dependencies: deps });
 	}
 
 	async createService(blueprint_id: string): Promise<void> {
@@ -36,14 +36,18 @@ export class CliApi {
 		const node = this.node;
 
 		// upload modules
-		const modules = await Promise.all(module_configs.map(m => getModule(m.wasm_path, undefined, m.config_path)));
+		const modules = await Promise.all(module_configs.map((m) => getModule(m.wasm_path, undefined, m.config_path)));
 		for (const module of modules) {
 			await this.distributor.uploadModuleToNode(node, module);
 		}
 
 		// create blueprints
 		const dependencies = modules.map((m) => m.config.name);
-		const blueprintId = await this.distributor.uploadBlueprint(node, {name: blueprint_name, id: uuidv4(), dependencies});
+		const blueprintId = await this.distributor.uploadBlueprint(node, {
+			name: blueprint_name,
+			id: uuidv4(),
+			dependencies,
+		});
 
 		// create service
 		const serviceId = await this.distributor.createService(node, blueprintId);
@@ -51,7 +55,6 @@ export class CliApi {
 	}
 
 	async runAir(path: string, data: Map<string, any>): Promise<void> {
-
 		const fileData = await fs.readFile(path);
 		const air = fileData.toString('utf-8');
 
@@ -64,7 +67,7 @@ export class CliApi {
 	}
 
 	async getModules(): Promise<string[]> {
-		return await this.distributor.getModules(this.node)
+		return await this.distributor.getModules(this.node);
 	}
 
 	async getInterfaces(expand?: boolean): Promise<void> {
