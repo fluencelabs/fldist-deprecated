@@ -1,11 +1,12 @@
 import { promises as fs } from 'fs';
 import Joi from 'joi';
-import { Context } from 'src/args';
+import { createConfig, Distributor, loadModule, Module } from '../distributor';
+import { Context } from '../args';
 
 const serviceSchema = Joi.object({
 	name: Joi.string().required(),
 	alias: Joi.string().optional(),
-	dependencies: Joi.array().items(Joi.string()),
+	dependencies: Joi.array().items(Joi.string()).default([]),
 });
 
 const moduleSchema = Joi.object({
@@ -13,11 +14,9 @@ const moduleSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
 	config: Joi.object({
-		name: Joi.string().optional(),
-		mem_pages_count: Joi.number().optional(),
-		logger_enabled: Joi.boolean().optional(),
-		wasi: Joi.any(),
+		mapped_dirs: Joi.array().items(Joi.string()).optional(),
 		mounted_binaries: Joi.object().optional(),
+		preopened_files: Joi.object().optional(),
 	}),
 });
 
@@ -25,6 +24,7 @@ const scriptStorageSchema = Joi.object({
 	name: Joi.string().required(),
 	file: Joi.string(),
 	url: Joi.string().uri(),
+	interval: Joi.number().min(3).optional().default(3),
 }).or('file', 'url');
 
 const scriptsSchema = Joi.object({
@@ -42,6 +42,8 @@ const appConfigSchema = Joi.object({
 });
 
 const deployApp = async (context: Context, input: string, output: string): Promise<void> => {
+	const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+
 	const inputRaw = await fs.readFile(input, 'utf-8');
 	const inputObj = JSON.parse(inputRaw);
 	const res = appConfigSchema.validate(inputObj);
@@ -50,24 +52,50 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 		return;
 	}
 
-	for (let module of inputObj.modules) {
+	for (let module of res.value.modules) {
 		console.log(module);
+		const base64 = await loadModule(module.file);
+		const config = createConfig({
+			name: module.name,
+			mountedBinaries: module.config.mounted_binaries,
+			preopenedFiles: module.config.preopened_files,
+			mappedDirs: module.config.mapped_dirs,
+		});
+		await distributor.uploadModuleToNode(context.node, {
+			base64: base64,
+			config: config,
+		});
 	}
 
-	for (let service of inputObj.services) {
+	for (let service of res.value.services) {
 		console.log(service);
+		const bpId = await distributor.uploadBlueprint(context.node, {
+			name: service.name,
+			dependencies: service.dependencies,
+		});
+
+		const serviceId = await distributor.createService(context.node, bpId);
+
+		if (service.alias) {
+			await distributor.createAlias(context.node, serviceId, service.alias);
+		}
 	}
 
-	for (let script of inputObj.scripts) {
-		console.log(script);
+	for (let script of res.value.scripts) {
+		const text = fs.readFile(script.file, 'utf-8');
+		console.log(text);
+		// await distributor.runAir()
 	}
 
-	for (let script of inputObj.script_storage) {
-		console.log(script);
+	for (let script of res.value.script_storage) {
+		const text = await fs.readFile(script.file, 'utf-8');
+		console.log(text);
+
+		await distributor.addScript(context.node, text, script.interval);
 	}
 
-	console.log(inputObj);
-	await fs.writeFile(output, JSON.stringify(inputObj, undefined, 4), 'utf-8');
+	console.log(res.value);
+	await fs.writeFile(output, JSON.stringify(res.value, undefined, 4), 'utf-8');
 	console.log('Application deployed successfully');
 };
 

@@ -13,7 +13,7 @@ import createKeyPair from './commands/createKeyPair';
 import runAir from './commands/runAir';
 import env from './commands/env';
 import getInterface from './commands/getInterface';
-import { DEFAULT_NODE_IDX } from 'src';
+import { DEFAULT_NODE_IDX } from './';
 
 const { hideBin } = require('yargs/helpers');
 
@@ -141,7 +141,7 @@ export function args() {
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',
-			choices: ['dev', 'testnet'],
+			choices: ['dev', 'testnet', 'local'],
 			default: 'testnet',
 		})
 		.option('node-id', {

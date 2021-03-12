@@ -16,13 +16,15 @@ import {
 	uploadModule,
 	FluenceClient,
 	sendParticle,
+	addScript as fluenceAddScript,
+	removeScript as fluenceRemoveScript,
 } from '@fluencelabs/fluence';
 import { v4 as uuidv4 } from 'uuid';
 import { Node } from '@fluencelabs/fluence-network-environment';
+import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
-import { Context } from './args';
 
-type Module = {
+export type Module = {
 	base64: string;
 	config: ModuleConfig;
 };
@@ -62,7 +64,7 @@ type ConfigArgs = {
 	mappedDirs?: any;
 };
 
-function createConfig(args: ConfigArgs): ModuleConfig {
+export function createConfig(args: ConfigArgs): ModuleConfig {
 	return {
 		name: args.name,
 		mem_pages_count: 100,
@@ -193,6 +195,33 @@ export class Distributor {
 		return await fluenceCreateService(client, bpId, node.peerId, this.ttl);
 	}
 
+	async createAlias(node: Node, serviceId: string, alias: string): Promise<void> {
+		const client = await this.makeClient(node);
+
+		const [request, promise] = new RequestFlowBuilder()
+			.withRawScript(
+				`
+        (seq
+			(call init_relay ("op" "identity") [])
+			(seq 
+				(call node ("srv" "add_alias") [alias serviceId])
+				(seq
+					(call init_relay ("op" "identity") [])
+					(call %init_peer_id% ("callback" "callback") [])
+				)
+			)
+        )
+    `,
+			)
+			.withVariable('node', node.peerId)
+			.withVariables({ alias, serviceId })
+			.buildAsFetch('callback', 'callback');
+
+		await client.initiateFlow(request);
+		await promise;
+		return;
+	}
+
 	async getModules(node: Node): Promise<string[]> {
 		const client = await this.makeClient(node);
 		return await getMod(client, this.ttl);
@@ -242,6 +271,16 @@ export class Distributor {
 		let particleId = await sendParticle(client, new Particle(air, data, this.ttl));
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		return particleId;
+	}
+
+	async addScript(node: Node, script: string, interval?: number): Promise<string> {
+		const client = await this.makeClient(node);
+		return await fluenceAddScript(client, script, interval || 3, node.peerId, this.ttl);
+	}
+
+	async removeScript(node: Node, scriptId: string) {
+		const client = await this.makeClient(node);
+		return await fluenceRemoveScript(client, scriptId, node.peerId, this.ttl);
 	}
 
 	async uploadAllModules(node: Node) {

@@ -1,5 +1,5 @@
-import { Context } from 'src/args';
-import { Distributor, getModule } from 'src/distributor';
+import { Context } from '../args';
+import { Distributor, getModule } from '../distributor';
 
 export default {
 	command: 'upload',

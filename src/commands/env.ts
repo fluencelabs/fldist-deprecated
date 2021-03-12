@@ -1,4 +1,4 @@
-import { Context } from 'src/args';
+import { Context } from '../args';
 
 export default {
 	command: 'env',

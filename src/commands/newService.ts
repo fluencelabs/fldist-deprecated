@@ -1,5 +1,5 @@
-import { Context } from 'src/args';
-import { Distributor, getModule } from 'src/distributor';
+import { Context } from '../args';
+import { Distributor, getModule } from '../distributor';
 import { v4 as uuidv4 } from 'uuid';
 
 export default {

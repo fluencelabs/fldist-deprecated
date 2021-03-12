@@ -36,7 +36,8 @@
 	"script_storage": [
 		{
 			"name": "remove_disconnected",
-			"file": "remove_disconnected.air"
+			"file": "remove_disconnected.air",
+			"interval": 10
 		}
 	]
 }

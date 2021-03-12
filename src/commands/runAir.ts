@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
-import { Context } from 'src/args';
-import { Distributor } from 'src/distributor';
+import { Context } from '../args';
+import { Distributor } from '../distributor';
 
 export default {
 	command: 'run_air',
