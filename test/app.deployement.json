@@ -2,12 +2,14 @@
     "services": [
         {
             "name": "history",
+            "alias": "history",
             "dependencies": [
                 "history-inmemory"
             ]
         },
         {
             "name": "userlist",
+            "alias": "userlist",
             "dependencies": [
                 "user-list-inmemory"
             ]
@@ -15,18 +17,24 @@
     ],
     "modules": [
         {
-            "import_name": "history-inmemory",
-            "file": "history.wasm"
+            "name": "history-inmemory",
+            "file": "history.wasm",
+            "config": {}
         },
         {
-            "import_name": "user-list-inmemory",
-            "file": "user-list.wasm"
+            "name": "user-list-inmemory",
+            "file": "user-list.wasm",
+            "config": {}
         }
     ],
     "scripts": [
         {
             "name": "set_tetraplet",
-            "file": "set_tetraplet.air"
+            "file": "set_tetraplet.air",
+            "variables": {
+                "relay": "$relay",
+                "node": "$node"
+            }
         }
     ],
     "script_storage": [

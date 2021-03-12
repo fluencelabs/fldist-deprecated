@@ -1,7 +1,6 @@
 import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
-import { CliApi } from './index';
-import { generatePeerId, peerIdToSeed, setLogLevel } from '@fluencelabs/fluence';
+import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
 import { testNet, dev, Node } from '@fluencelabs/fluence-network-environment';
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
@@ -13,6 +12,8 @@ import newService from './commands/newService';
 import createKeyPair from './commands/createKeyPair';
 import runAir from './commands/runAir';
 import env from './commands/env';
+import getInterface from './commands/getInterface';
+import { DEFAULT_NODE_IDX } from 'src';
 
 const { hideBin } = require('yargs/helpers');
 
@@ -43,6 +44,16 @@ const local = [
 	},
 ];
 
+type Env = 'dev' | 'testnet' | 'local';
+
+export interface Context {
+	nodes: Node[];
+	node: Node;
+	env: Env;
+	ttl: number;
+	seed: string;
+}
+
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
@@ -51,12 +62,22 @@ export function args() {
 		.completion()
 		.demandCommand()
 		.strict()
+		.middleware(async (argv) => {
+			const seed = argv.seed as string;
+			if (seed) {
+				// throws errors here
+				await seedToPeerId(seed);
+				return;
+			}
+			const peerId = await generatePeerId();
+			argv.seed = peerIdToSeed(peerId);
+		})
 		.middleware((argv) => {
 			let logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
 			setLogLevel(logLevel);
 
-			let env = argv.env as 'dev' | 'testnet' | 'local';
+			let env = argv.env as Env;
 			let nodes;
 			switch (env) {
 				case 'local':
@@ -68,6 +89,9 @@ export function args() {
 				case 'testnet':
 					nodes = testNet;
 					break;
+				default:
+					console.error('incorrect env', env);
+					process.exit(1);
 			}
 
 			let node: Node | undefined = undefined;
@@ -99,7 +123,14 @@ export function args() {
 			}
 
 			let ttl = argv.ttl as number;
-			argv.api = new CliApi(nodes, ttl, argv.seed as string, node);
+			const context: Context = {
+				nodes: nodes,
+				node: node || nodes[DEFAULT_NODE_IDX],
+				seed: argv.seed as string,
+				env: env,
+				ttl: ttl,
+			};
+			argv.context = context;
 		})
 		.option('s', {
 			alias: 'seed',

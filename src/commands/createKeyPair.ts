@@ -7,7 +7,7 @@ export default {
 		return yargs;
 	},
 	handler: async (_) => {
-		let peerId = await generatePeerId();
+		const peerId = await generatePeerId();
 		console.log({
 			...peerId.toJSON(),
 			seed: peerIdToSeed(peerId),

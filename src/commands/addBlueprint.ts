@@ -1,3 +1,6 @@
+import { Context } from 'src/args';
+import { Distributor } from 'src/distributor';
+
 export default {
 	command: 'add_blueprint',
 	describe: 'Add a blueprint',
@@ -17,7 +20,12 @@ export default {
 			});
 	},
 	handler: async (argv) => {
-		let id = await (argv.api as CliApi).addBlueprint(argv.name as string, argv.deps as string[]);
+		const context: Context = argv.context;
+		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+		let id = await distributor.uploadBlueprint(context.node, {
+			name: argv.name,
+			dependencies: argv.deps,
+		});
 		console.log(`blueprint '${id}' added successfully`);
 		process.exit(0);
 	},

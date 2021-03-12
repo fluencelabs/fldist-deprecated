@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import Joi from 'joi';
+import { Context } from 'src/args';
 
 const serviceSchema = Joi.object({
 	name: Joi.string().required(),
@@ -30,6 +31,7 @@ const scriptsSchema = Joi.object({
 	name: Joi.string().required(),
 	file: Joi.string(),
 	url: Joi.string().uri(),
+	variables: Joi.object().optional(),
 }).or('file', 'url');
 
 const appConfigSchema = Joi.object({
@@ -39,18 +41,41 @@ const appConfigSchema = Joi.object({
 	script_storage: Joi.array().items(scriptStorageSchema).optional(),
 });
 
-const deployApp = async (args: any): Promise<void> => {
-	const input = await fs.readFile(args.input, 'utf-8');
-	const inputObj = JSON.parse(input);
+const deployApp = async (context: Context, input: string, output: string): Promise<void> => {
+	const inputRaw = await fs.readFile(input, 'utf-8');
+	const inputObj = JSON.parse(inputRaw);
+	const res = appConfigSchema.validate(inputObj);
+	if (res.error) {
+		console.log(res.error);
+		return;
+	}
+
+	for (let module of inputObj.modules) {
+		console.log(module);
+	}
+
+	for (let service of inputObj.services) {
+		console.log(service);
+	}
+
+	for (let script of inputObj.scripts) {
+		console.log(script);
+	}
+
+	for (let script of inputObj.script_storage) {
+		console.log(script);
+	}
+
 	console.log(inputObj);
-	await fs.writeFile(args.output, JSON.stringify(inputObj, undefined, 4), 'utf-8');
+	await fs.writeFile(output, JSON.stringify(inputObj, undefined, 4), 'utf-8');
+	console.log('Application deployed successfully');
 };
 
-const deployModule = () => {};
+// const deployModule = () => {};
 
-const deployService = () => {};
+// const deployService = () => {};
 
-const deployScript = () => {};
+// const deployScript = () => {};
 
 export default {
 	command: 'deploy_app',
@@ -71,8 +96,9 @@ export default {
 			});
 	},
 	handler: async (argv: any) => {
-		await deployApp(argv);
-		console.log('Application deployed successfully');
+		const input: string = argv.i;
+		const output: string = argv.o;
+		await deployApp(argv.context, input, output);
 		process.exit(0);
 	},
 };

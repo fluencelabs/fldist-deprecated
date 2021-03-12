@@ -1,4 +1,4 @@
-import { CliApi } from 'src';
+import { Context } from 'src/args';
 
 export default {
 	command: 'env',
@@ -12,11 +12,11 @@ export default {
 		});
 	},
 	handler: (argv) => {
-		let api = argv.api as CliApi;
+		const context: Context = argv.context;
 		if (argv.json) {
-			console.log(JSON.stringify(api.distributor.nodes, undefined, 2));
+			console.log(JSON.stringify(context.nodes, undefined, 2));
 		} else {
-			let env = api.distributor.nodes.map((n) => n.multiaddr).join('\n');
+			let env = context.nodes.map((n) => n.multiaddr).join('\n');
 			console.log(env);
 		}
 		process.exit(0);

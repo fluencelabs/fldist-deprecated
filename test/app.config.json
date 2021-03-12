@@ -26,7 +26,11 @@
 	"scripts": [
 		{
 			"name": "set_tetraplet",
-			"file": "set_tetraplet.air"
+			"file": "set_tetraplet.air",
+			"variables": {
+				"relay": "$relay",
+				"node": "$node"
+			}
 		}
 	],
 	"script_storage": [

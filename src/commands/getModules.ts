@@ -1,3 +1,6 @@
+import { Context } from 'src/args';
+import { Distributor } from 'src/distributor';
+
 export default {
 	command: 'get_modules',
 	describe: 'Print all modules on a node',
@@ -9,7 +12,10 @@ export default {
 		});
 	},
 	handler: async (argv) => {
-		let modules = await (argv.api as CliApi).getModules();
+		const context: Context = argv.context;
+		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+		let modules = await distributor.getModules(context.node);
+
 		if (argv.pretty) {
 			console.log(JSON.stringify(modules, undefined, 2));
 		} else {

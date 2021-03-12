@@ -20,6 +20,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Node } from '@fluencelabs/fluence-network-environment';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
+import { Context } from './args';
 
 type Module = {
 	base64: string;

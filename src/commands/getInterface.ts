@@ -1,3 +1,6 @@
+import { Context } from 'src/args';
+import { Distributor } from 'src/distributor';
+
 export default {
 	command: 'get_interface',
 	describe: 'Print a service interface',
@@ -16,7 +19,16 @@ export default {
 			});
 	},
 	handler: async (argv) => {
-		await (argv.api as CliApi).getInterface(argv.id as string, argv.expand as boolean);
+		const context: Context = argv.context;
+		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+
+		const interfaces = await distributor.getInterface(argv.id, context.node);
+		if (Boolean(argv.expand)) {
+			console.log(JSON.stringify(interfaces, undefined, 2));
+		} else {
+			console.log(interfaces);
+			console.log('to expand interfaces, use get_interfaces --expand');
+		}
 		process.exit(0);
 	},
 };

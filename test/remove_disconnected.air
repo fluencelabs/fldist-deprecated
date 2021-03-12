@@ -1,13 +1,13 @@
 (seq
-    (call %init_peer_id% (${userlist} "is_authenticated") [] token)
+    (call %init_peer_id% ("userlist" "is_authenticated") [] token)
     (seq 
-        (call %init_peer_id% (${userlist} "get_users") [] all_users)
+        (call %init_peer_id% ("userlist" "get_users") [] all_users)
             (fold all_users.$.users! u
                 (par
                     (seq
                         (call u.$.relay_id! ("peer" "is_connected") [u.$.peer_id!] is_connected)
                         (match is_connected false
-                            (call %init_peer_id% (${userlist} "leave") [u.$.peer_id!])
+                            (call %init_peer_id% ("userlist" "leave") [u.$.peer_id!])
                         )
                     )
                     (next u)

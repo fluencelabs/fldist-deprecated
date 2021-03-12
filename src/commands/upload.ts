@@ -1,3 +1,6 @@
+import { Context } from 'src/args';
+import { Distributor, getModule } from 'src/distributor';
+
 export default {
 	command: 'upload',
 	describe: 'Upload selected wasm',
@@ -30,7 +33,11 @@ type ConfigArgs = {
 			.conflicts('config', 'name');
 	},
 	handler: async (argv) => {
-		await (argv.api as CliApi).uploadModule(argv.path as string, argv.name as string, argv.config as string);
+		const context: Context = argv.context;
+		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+
+		const module = await getModule(argv.path, argv.name, argv.configPath);
+		await distributor.uploadModuleToNode(context.node, module);
 		console.log('module uploaded successfully');
 		process.exit(0);
 	},
