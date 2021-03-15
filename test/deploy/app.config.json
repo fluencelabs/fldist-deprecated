@@ -1,45 +1,51 @@
 {
-	"services": [
-		{
-			"name": "history",
-			"alias": "history",
-			"dependencies": ["history-inmemory"]
+	"services": {
+		"history": {
+			"dependencies": ["history_inmemory"],
+			"node": {
+				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
+				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
+			}
 		},
-		{
-			"name": "userlist",
-			"alias": "userlist",
-			"dependencies": ["user-list-inmemory"]
+		"user_list": {
+			"dependencies": ["user_list_inmemory"],
+			"node": {
+				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
+				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
+			}
 		}
-	],
-	"modules": [
-		{
-			"name": "history-inmemory",
+	},
+	"modules": {
+		"history_inmemory": {
 			"file": "history.wasm",
 			"config": {}
 		},
-		{
-			"name": "user-list-inmemory",
-			"file": "user-list.wasm",
+		"user_list_inmemory": {
+			"file": "user_list.wasm",
 			"config": {}
 		}
-	],
-	"scripts": [
-		{
-			"name": "set_tetraplet",
+	},
+	"scripts": {
+		"set_tetraplet": {
 			"file": "set_tetraplet.air",
 			"variables": {
-				"relay": "$relay",
-				"node": "$node",
 				"function": "is_authenticated",
 				"json_path": "$.[\"is_authenticated\"]"
+			},
+			"node": {
+				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
+				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
 			}
 		}
-	],
-	"script_storage": [
-		{
-			"name": "remove_disconnected",
+	},
+	"script_storage": {
+		"remove_disconnected": {
 			"file": "remove_disconnected.air",
-			"interval": 10
+			"interval": 10,
+			"node": {
+				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
+				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
+			}
 		}
-	]
+	}
 }

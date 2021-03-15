@@ -58,6 +58,7 @@
   "dependencies": {
     "@fluencelabs/fluence": "0.9.33",
     "@fluencelabs/fluence-network-environment": "1.0.8",
+    "handlebars": "^4.7.7",
     "joi": "^17.4.0",
     "loglevel": "^1.7.1",
     "promise-retry": "^2.0.1",
