@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import path from 'path';
 import Joi from 'joi';
 import { createConfig, Distributor, loadModule, Module } from '../distributor';
 import { Context } from '../args';
@@ -44,6 +45,8 @@ const appConfigSchema = Joi.object({
 const deployApp = async (context: Context, input: string, output: string): Promise<void> => {
 	const distributor = new Distributor(context.nodes, context.ttl, context.seed);
 
+	const root = path.dirname(input);
+
 	const inputRaw = await fs.readFile(input, 'utf-8');
 	const inputObj = JSON.parse(inputRaw);
 	const res = appConfigSchema.validate(inputObj);
@@ -53,57 +56,71 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 	}
 
 	for (let module of res.value.modules) {
-		console.log(module);
-		const base64 = await loadModule(module.file);
+		console.log('Creating module: ', module.name);
+		const base64 = await loadModule(path.join(root, module.file));
 		const config = createConfig({
 			name: module.name,
 			mountedBinaries: module.config.mounted_binaries,
 			preopenedFiles: module.config.preopened_files,
 			mappedDirs: module.config.mapped_dirs,
 		});
-		await distributor.uploadModuleToNode(context.node, {
+
+		const id = await distributor.uploadModuleToNode(context.node, {
 			base64: base64,
 			config: config,
 		});
+		module.id = id;
 	}
 
 	for (let service of res.value.services) {
-		console.log(service);
+		console.log('Creating blueprint for service: ', service.name);
 		const bpId = await distributor.uploadBlueprint(context.node, {
 			name: service.name,
 			dependencies: service.dependencies,
 		});
+		service.blueprint_id = bpId;
 
+		console.log('Creating service: ', service.name);
 		const serviceId = await distributor.createService(context.node, bpId);
+		service.id = serviceId;
 
 		if (service.alias) {
-			await distributor.createAlias(context.node, serviceId, service.alias);
+			console.log('Setting alias: ', service.alias);
+			// await distributor.createAlias(context.node, serviceId, service.alias);
 		}
 	}
 
 	for (let script of res.value.scripts) {
-		const text = fs.readFile(script.file, 'utf-8');
-		console.log(text);
-		// await distributor.runAir()
+		console.log('Running script: ', script.name);
+		const scriptText = await fs.readFile(path.join(root, script.file), 'utf-8');
+		const vars = new Map();
+		for (let k in script.variables) {
+			if (script.variables[k] === '$relay') {
+				vars.set(k, context.node.peerId);
+				continue;
+			}
+
+			if (script.variables[k] === '$node') {
+				vars.set(k, context.node.peerId);
+				continue;
+			}
+
+			vars.set(k, script.variables[k]);
+		}
+
+		const [particle, promise] = await distributor.runAir(context.node, scriptText, () => {}, vars);
+		await promise;
 	}
 
 	for (let script of res.value.script_storage) {
-		const text = await fs.readFile(script.file, 'utf-8');
-		console.log(text);
-
-		await distributor.addScript(context.node, text, script.interval);
+		const text = await fs.readFile(path.join(root, script.file), 'utf-8');
+		const id = await distributor.addScript(context.node, text, script.interval);
+		script.id = id;
 	}
 
-	console.log(res.value);
 	await fs.writeFile(output, JSON.stringify(res.value, undefined, 4), 'utf-8');
 	console.log('Application deployed successfully');
 };
-
-// const deployModule = () => {};
-
-// const deployService = () => {};
-
-// const deployScript = () => {};
 
 export default {
 	command: 'deploy_app',

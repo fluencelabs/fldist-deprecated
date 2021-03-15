@@ -253,34 +253,87 @@ export class Distributor {
 		return res;
 	}
 
-	async runAir(node: Node, air: string, data: Map<string, any>): Promise<string> {
+	async runAir(
+		node: Node,
+		air: string,
+		callback: (args, tetraplets) => void,
+		data?: Map<string, any>,
+	): Promise<[string, Promise<void>]> {
+		data = data || new Map();
 		const client = await this.makeClient(node);
-		let returnService = uuidv4();
 
-		data.set('returnService', returnService);
-		data.set('relay', node.peerId);
+		const [request, promise] = new RequestFlowBuilder()
+			.withRawScript(air)
+			.withVariable('relay', node.peerId)
+			.withVariable('returnService', 'returnService')
+			.withVariables(data)
+			.configHandler((h) => {
+				h.onEvent('returnService', 'run', callback);
+			})
+			.buildWithErrorHandling();
 
-		subscribeToEvent(client, returnService, 'run', (args, tetraplets) => {
-			console.log('===================');
-			console.log(JSON.stringify(args, undefined, 2));
-			console.log(tetraplets);
-			console.log('===================');
-			return {};
-		});
+		await client.initiateFlow(request);
 
-		let particleId = await sendParticle(client, new Particle(air, data, this.ttl));
-		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
-		return particleId;
+		return [request.id, promise];
 	}
 
 	async addScript(node: Node, script: string, interval?: number): Promise<string> {
 		const client = await this.makeClient(node);
-		return await fluenceAddScript(client, script, interval || 3, node.peerId, this.ttl);
+
+		const intervalToUse = interval || 3;
+		const escaped = script.replace('"', '\\"');
+
+		const [request, promise] = new RequestFlowBuilder()
+			.withRawScript(
+				`
+        (seq
+			(call init_relay ("op" "identity") [])
+			(seq
+				(call node ("script" "add") [script interval] result)
+				(seq
+					(call init_relay ("op" "identity") [])
+					(call %init_peer_id% ("callback" "callback") [result])
+				)
+			)
+        )
+    `,
+			)
+			.withVariable('node', node.peerId)
+			.withVariable('script', escaped)
+			.withVariable('interval', intervalToUse.toString())
+			.withTTL(this.ttl)
+			.buildAsFetch<[string]>('callback', 'callback');
+
+		await client.initiateFlow(request);
+		const [res] = await promise;
+		return res;
 	}
 
-	async removeScript(node: Node, scriptId: string) {
+	async removeScript(node: Node, scriptId: string): Promise<void> {
 		const client = await this.makeClient(node);
-		return await fluenceRemoveScript(client, scriptId, node.peerId, this.ttl);
+
+		const [request, promise] = new RequestFlowBuilder()
+			.withRawScript(
+				`
+        (seq
+			(call init_relay ("op" "identity") [])
+			(seq
+				(call node ("script" "remove") [scriptId])
+				(seq
+					(call init_relay ("op" "identity") [])
+					(call %init_peer_id% ("callback" "callback") [])
+				)
+			)
+        )
+    `,
+			)
+			.withVariable('node', node.peerId)
+			.withVariable('scriptId', scriptId)
+			.withTTL(this.ttl)
+			.buildAsFetch<[]>('callback', 'callback');
+
+		await client.initiateFlow(request);
+		await promise;
 	}
 
 	async uploadAllModules(node: Node) {

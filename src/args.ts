@@ -125,7 +125,7 @@ export function args() {
 			let ttl = argv.ttl as number;
 			const context: Context = {
 				nodes: nodes,
-				node: node || nodes[DEFAULT_NODE_IDX],
+				node: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
 				seed: argv.seed as string,
 				env: env,
 				ttl: ttl,

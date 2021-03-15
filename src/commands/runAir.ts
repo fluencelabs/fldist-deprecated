@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import log from 'loglevel';
 import { Context } from '../args';
 import { Distributor } from '../distributor';
 
@@ -32,6 +33,15 @@ export default {
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');
 
-		await distributor.runAir(context.node, air, argv.data);
+		const callback = (args, tetraplets) => {
+			console.log('===================');
+			console.log(JSON.stringify(args, undefined, 2));
+			console.log(tetraplets);
+			console.log('===================');
+			return {};
+		};
+
+		const [particleId, _promise] = await distributor.runAir(context.node, air, callback, argv.data);
+		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 	},
 };
