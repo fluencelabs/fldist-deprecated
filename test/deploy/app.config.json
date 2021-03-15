@@ -29,7 +29,9 @@
 			"file": "set_tetraplet.air",
 			"variables": {
 				"relay": "$relay",
-				"node": "$node"
+				"node": "$node",
+				"function": "is_authenticated",
+				"json_path": "$.[\"is_authenticated\"]"
 			}
 		}
 	],

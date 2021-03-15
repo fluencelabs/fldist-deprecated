@@ -86,7 +86,7 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 
 		if (service.alias) {
 			console.log('Setting alias: ', service.alias);
-			// await distributor.createAlias(context.node, serviceId, service.alias);
+			await distributor.createAlias(context.node, serviceId, service.alias);
 		}
 	}
 
