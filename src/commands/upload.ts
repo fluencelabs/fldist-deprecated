@@ -35,12 +35,12 @@ type ConfigArgs = {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+		const distributor: Distributor = argv.distributor;
 
 		const module = await getModule(argv.path, argv.name, argv.configPath);
-		log.debug(`uploading module ${module.config.name} to node ${context.node.peerId} with config:`);
+		log.debug(`uploading module ${module.config.name} to node ${context.relay.peerId} with config:`);
 		log.debug(JSON.stringify(module.config, undefined, 2));
-		await distributor.uploadModuleToNode(context.node, module);
+		await distributor.uploadModuleToNode(context.relay, module);
 		console.log('module uploaded successfully');
 		process.exit(0);
 	},

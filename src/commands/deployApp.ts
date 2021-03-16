@@ -105,9 +105,7 @@ const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): 
 	});
 };
 
-const deployApp = async (context: Context, input: string, output: string): Promise<void> => {
-	const distributor = new Distributor(context.nodes, context.ttl, context.seed);
-
+const deployApp = async (distributor: Distributor, context: Context, input: string, output: string): Promise<void> => {
 	const root = path.dirname(input);
 
 	const inputRaw = await fs.readFile(input, 'utf-8');
@@ -195,7 +193,7 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 
 		console.log(readyText);
 
-		const id = await distributor.addScript(context.node, readyText, script.interval);
+		const id = await distributor.addScript(context.relay, readyText, script.interval);
 		script.id = id;
 	}
 
@@ -224,7 +222,7 @@ export default {
 	handler: async (argv: any) => {
 		const input: string = argv.i;
 		const output: string = argv.o;
-		await deployApp(argv.context, input, output);
+		await deployApp(argv.distributor, argv.context, input, output);
 		process.exit(0);
 	},
 };

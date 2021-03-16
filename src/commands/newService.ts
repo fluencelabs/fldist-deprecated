@@ -28,9 +28,9 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+		const distributor: Distributor = argv.distributor;
 
-		const node = context.node;
+		const node = context.relay;
 		const blueprintName = argv.name as string;
 		const moduleConfigs = argv.modules as Array<{ wasmPath: string; configPath?: string }>;
 

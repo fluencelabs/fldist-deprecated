@@ -13,8 +13,8 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
-		let modules = await distributor.getModules(context.node);
+		const distributor: Distributor = argv.distributor;
+		let modules = await distributor.getModules(context.relay);
 
 		if (argv.pretty) {
 			console.log(JSON.stringify(modules, undefined, 2));

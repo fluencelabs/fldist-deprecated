@@ -14,6 +14,7 @@ import runAir from './commands/runAir';
 import env from './commands/env';
 import getInterface from './commands/getInterface';
 import { DEFAULT_NODE_IDX } from './';
+import { Distributor } from './distributor';
 
 const { hideBin } = require('yargs/helpers');
 
@@ -48,7 +49,7 @@ type Env = 'dev' | 'testnet' | 'local';
 
 export interface Context {
 	nodes: Node[];
-	node: Node;
+	relay: Node;
 	env: Env;
 	ttl: number;
 	seed: string;
@@ -125,12 +126,15 @@ export function args() {
 			let ttl = argv.ttl as number;
 			const context: Context = {
 				nodes: nodes,
-				node: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
+				relay: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
 				seed: argv.seed as string,
 				env: env,
 				ttl: ttl,
 			};
 			argv.context = context;
+		})
+		.middleware(async (argv) => {
+			argv.distributor = await Distributor.create(argv.context as Context);
 		})
 		.option('s', {
 			alias: 'seed',

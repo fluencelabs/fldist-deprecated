@@ -13,9 +13,9 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
+		const distributor: Distributor = argv.distributor;
 
-		const interfaces = await distributor.getInterfaces(context.node);
+		const interfaces = await distributor.getInterfaces(context.relay);
 		if (Boolean(argv.expand)) {
 			console.log(JSON.stringify(interfaces, undefined, 2));
 		} else {

@@ -14,8 +14,8 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
-		const serviceId = await distributor.createService(context.node, argv.id);
+		const distributor: Distributor = argv.distributor;
+		const serviceId = await distributor.createService(context.relay, argv.id);
 		console.log(`service id: ${serviceId}`);
 		console.log('service created successfully');
 		process.exit(0);
