@@ -29,7 +29,7 @@
 		"clean:all": "npm run clean && (rm -r ./node_modules || true)",
 		"lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
 		"test": "mocha",
-		"build": "npm run clean && npm run tsc",
+		"build": "npm run clean && npm run tsc"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.6",
