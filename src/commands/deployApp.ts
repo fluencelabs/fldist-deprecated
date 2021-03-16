@@ -10,14 +10,11 @@ import { Context } from '../args';
 // const identifierPattern = /'[\w][\d\w_]+'/;
 const identifierPattern = /'.+'/;
 
-const node = Joi.object({
-	multiaddr: Joi.string().required(),
-	peerId: Joi.string().required(),
-});
+const node = Joi.string();
 
 const serviceSchema = Joi.object({
 	alias: Joi.string().optional(),
-	node: node,
+	node: node.required(),
 	dependencies: Joi.array().items(Joi.string()).default([]),
 });
 
@@ -34,7 +31,7 @@ const moduleSchema = Joi.object({
 const scriptStorageSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
-	node: node,
+	node: node.required(),
 	interval: Joi.number().min(3).optional().default(3),
 }).or('file', 'url');
 
@@ -161,7 +158,7 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 	let variables: Record<string, any> = {};
 	for (let key in value.services) {
 		variables[key] = value.services[key].id;
-		variables[key + '__node'] = value.services[key].node.peerId;
+		variables[key + '__node'] = value.services[key].node;
 	}
 	console.log(variables);
 
@@ -178,7 +175,7 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 			node: script.node,
 		};
 
-		const [_particle, promise] = await distributor.runAir(script.node, scriptText, () => {}, vars);
+		const [_particle, promise] = await distributor.runAir(scriptText, () => {}, vars);
 		await promise;
 	}
 
@@ -193,7 +190,7 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 
 		console.log(readyText);
 
-		const id = await distributor.addScript(context.relay, readyText, script.interval);
+		const id = await distributor.addScript(script.node, readyText, script.interval);
 		script.id = id;
 	}
 

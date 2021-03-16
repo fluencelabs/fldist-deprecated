@@ -2,17 +2,11 @@
 	"services": {
 		"history": {
 			"dependencies": ["history_inmemory"],
-			"node": {
-				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
-				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
-			}
+			"node": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
 		},
 		"user_list": {
 			"dependencies": ["user_list_inmemory"],
-			"node": {
-				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
-				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
-			}
+			"node": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
 		}
 	},
 	"modules": {
@@ -32,20 +26,14 @@
 				"function": "is_authenticated",
 				"json_path": "$.[\"is_authenticated\"]"
 			},
-			"node": {
-				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
-				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
-			}
+			"node": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
 		}
 	},
 	"script_storage": {
 		"remove_disconnected": {
 			"file": "remove_disconnected.air",
 			"interval": 10,
-			"node": {
-				"multiaddr": "/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3",
-				"peerId": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
-			}
+			"node": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
 		}
 	}
 }

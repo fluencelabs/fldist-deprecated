@@ -15,7 +15,7 @@ export default {
 		const context: Context = argv.context;
 		const distributor: Distributor = argv.distributor;
 
-		const interfaces = await distributor.getInterfaces(context.relay);
+		const interfaces = await distributor.getInterfaces(context.relay.peerId);
 		if (Boolean(argv.expand)) {
 			console.log(JSON.stringify(interfaces, undefined, 2));
 		} else {

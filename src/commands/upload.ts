@@ -40,7 +40,7 @@ type ConfigArgs = {
 		const module = await getModule(argv.path, argv.name, argv.configPath);
 		log.debug(`uploading module ${module.config.name} to node ${context.relay.peerId} with config:`);
 		log.debug(JSON.stringify(module.config, undefined, 2));
-		await distributor.uploadModuleToNode(context.relay, module);
+		await distributor.uploadModuleToNode(context.relay.peerId, module);
 		console.log('module uploaded successfully');
 		process.exit(0);
 	},

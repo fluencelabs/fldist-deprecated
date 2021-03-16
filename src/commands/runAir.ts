@@ -41,7 +41,7 @@ export default {
 			return {};
 		};
 
-		const [particleId, _promise] = await distributor.runAir(context.relay, air, callback, argv.data);
+		const [particleId, _promise] = await distributor.runAir(air, callback, argv.data);
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 	},
 };

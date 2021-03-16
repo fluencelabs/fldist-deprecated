@@ -37,19 +37,19 @@ export default {
 		// upload modules
 		const modules = await Promise.all(moduleConfigs.map((m) => getModule(m.wasmPath, undefined, m.configPath)));
 		for (const module of modules) {
-			await distributor.uploadModuleToNode(node, module);
+			await distributor.uploadModuleToNode(node.peerId, module);
 		}
 
 		// create blueprints
 		const dependencies = modules.map((m) => m.config.name);
-		const blueprintId = await distributor.uploadBlueprint(node, {
+		const blueprintId = await distributor.uploadBlueprint(node.peerId, {
 			name: blueprintName,
 			id: uuidv4(),
 			dependencies,
 		});
 
 		// create service
-		const serviceId = await distributor.createService(node, blueprintId);
+		const serviceId = await distributor.createService(node.peerId, blueprintId);
 		console.log(`service id: ${serviceId}`);
 		console.log('service created successfully');
 		process.exit(0);

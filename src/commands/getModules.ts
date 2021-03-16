@@ -14,7 +14,7 @@ export default {
 	handler: async (argv) => {
 		const context: Context = argv.context;
 		const distributor: Distributor = argv.distributor;
-		let modules = await distributor.getModules(context.relay);
+		let modules = await distributor.getModules(context.relay.peerId);
 
 		if (argv.pretty) {
 			console.log(JSON.stringify(modules, undefined, 2));

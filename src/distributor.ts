@@ -11,9 +11,6 @@ import {
 	peerIdToSeed,
 	seedToPeerId,
 	sendParticleAsFetch,
-	subscribeToEvent,
-	uploadModule,
-	sendParticle,
 	FluenceClient,
 	createClient,
 } from '@fluencelabs/fluence';
@@ -181,14 +178,19 @@ export class Distributor {
 		];
 	}
 
-	async uploadModuleToNode(node: Node, module: Module): Promise<string> {
+	async uploadModuleToNode(node: string, module: Module): Promise<string> {
 		const [req, promise] = new RequestFlowBuilder()
 			.withRawScript(
 				`
 	(seq
-        (call init_relay ("dist" "add_module") [module_bytes module_config] result)
-        (call %init_peer_id% ("callback" "callback") [result])
-
+		(call init_relay ("op" "identity") [])
+		(seq
+			(call init_relay ("dist" "add_module") [module_bytes module_config] result)
+			(seq 
+				(call init_relay ("op" "identity") [])
+        		(call %init_peer_id% ("callback" "callback") [result])
+			)
+		)
     )`,
 			)
 			.withVariable('module_bytes', module.base64)
@@ -201,17 +203,17 @@ export class Distributor {
 		return res;
 	}
 
-	async uploadBlueprint(node: Node, bp: Blueprint): Promise<string> {
-		log.warn(`uploading blueprint ${bp.name} to node ${node.peerId} via client ${this.client.selfPeerId}`);
+	async uploadBlueprint(node: string, bp: Blueprint): Promise<string> {
+		log.warn(`uploading blueprint ${bp.name} to node ${node} via client ${this.client.selfPeerId}`);
 
-		return await addBlueprint(this.client, bp.name, bp.dependencies, undefined, node.peerId, this.ttl);
+		return await addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
 	}
 
-	async createService(node: Node, bpId: string): Promise<string> {
-		return await fluenceCreateService(this.client, bpId, node.peerId, this.ttl);
+	async createService(node: string, bpId: string): Promise<string> {
+		return await fluenceCreateService(this.client, bpId, node, this.ttl);
 	}
 
-	async createAlias(node: Node, serviceId: string, alias: string): Promise<void> {
+	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
 			.withRawScript(
 				`
@@ -227,7 +229,7 @@ export class Distributor {
         )
     `,
 			)
-			.withVariable('node', node.peerId)
+			.withVariable('node', node)
 			.withVariables({ alias, serviceId })
 			.buildAsFetch('callback', 'callback');
 
@@ -236,25 +238,31 @@ export class Distributor {
 		return;
 	}
 
-	async getModules(node: Node): Promise<string[]> {
+	async getModules(node: string): Promise<string[]> {
 		return await getMod(this.client, this.ttl);
 	}
 
-	async getInterfaces(node: Node): Promise<string[]> {
+	async getInterfaces(node: string): Promise<string[]> {
 		console.log(this.ttl);
 		return await getInter(this.client, this.ttl);
 	}
 
-	async getInterface(serviceId: string, node: Node): Promise<string[]> {
+	async getInterface(serviceId: string, node: string): Promise<string[]> {
 		let callbackFn = 'getInterface';
 		let script = `
             (seq
-                (call relay ("srv" "get_interface") [serviceId] interface)
-                (call myPeerId ("_callback" "${callbackFn}") [interface])
+				(call init_relay ("op" "identity") [])
+				(seq 
+                	(call node ("srv" "get_interface") [serviceId] interface)
+					(seq
+						(call init_relay ("op" "identity") [])
+                		(call myPeerId ("_callback" "${callbackFn}") [interface])
+					)
+				)
             )
         `;
 		let data = {
-			relay: this.client.relayPeerId,
+			node: node,
 			myPeerId: this.client.selfPeerId,
 			serviceId: serviceId,
 		};
@@ -265,7 +273,6 @@ export class Distributor {
 	}
 
 	async runAir(
-		node: Node,
 		air: string,
 		callback: (args, tetraplets) => void,
 		data?: Map<string, any> | Record<string, any>,
@@ -275,7 +282,7 @@ export class Distributor {
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
 				.withRawScript(air)
-				.withVariable('relay', node.peerId)
+				.withVariable('relay', this.client.relayPeerId)
 				.withVariable('returnService', 'returnService')
 				.configHandler((h) => {
 					h.onEvent('returnService', 'run', callback);
@@ -294,10 +301,8 @@ export class Distributor {
 		return [request.id, operationPromise];
 	}
 
-	async addScript(node: Node, script: string, interval?: number): Promise<string> {
+	async addScript(node: string, script: string, interval?: number): Promise<string> {
 		const intervalToUse = interval || 3;
-		// const escaped = script.replace('"', '\\"');
-		const escaped = script;
 
 		const [request, promise] = new RequestFlowBuilder()
 			.withRawScript(
@@ -314,8 +319,8 @@ export class Distributor {
         )
     `,
 			)
-			.withVariable('node', node.peerId)
-			.withVariable('script', escaped)
+			.withVariable('node', node)
+			.withVariable('script', script)
 			.withVariable('interval', intervalToUse.toString())
 			.withTTL(this.ttl)
 			.buildAsFetch<[string]>('callback', 'callback');
@@ -325,7 +330,7 @@ export class Distributor {
 		return res;
 	}
 
-	async removeScript(node: Node, scriptId: string): Promise<void> {
+	async removeScript(node: string, scriptId: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
 			.withRawScript(
 				`
@@ -341,7 +346,7 @@ export class Distributor {
         )
     `,
 			)
-			.withVariable('node', node.peerId)
+			.withVariable('node', node)
 			.withVariable('scriptId', scriptId)
 			.withTTL(this.ttl)
 			.buildAsFetch<[]>('callback', 'callback');
@@ -350,7 +355,7 @@ export class Distributor {
 		await promise;
 	}
 
-	async uploadAllModules(node: Node) {
+	async uploadAllModules(node: string) {
 		for await (const module of this.modules) {
 			await this.uploadModuleToNode(node, module);
 		}
@@ -358,13 +363,13 @@ export class Distributor {
 
 	async uploadAllModulesToAllNodes() {
 		for await (const node of this.nodes) {
-			await this.uploadAllModules(node);
+			await this.uploadAllModules(node.peerId);
 		}
 	}
 
 	async uploadAllBlueprints(node: Node) {
 		for await (const bp of this.blueprints) {
-			await this.uploadBlueprint(node, bp);
+			await this.uploadBlueprint(node.peerId, bp);
 		}
 	}
 
@@ -382,7 +387,7 @@ export class Distributor {
 		async function uploadM(d: Distributor, node: Node, module: Module) {
 			const already = uploadedModules.has([node, module.config.name]);
 			if (!already) {
-				await promiseRetry({ retries: 3 }, () => d.uploadModuleToNode(node, module));
+				await promiseRetry({ retries: 3 }, () => d.uploadModuleToNode(node.peerId, module));
 			}
 			uploadedModules.add([node, module.config.name]);
 		}
@@ -390,7 +395,7 @@ export class Distributor {
 		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
 			const already = uploadedBlueprints.has([node, bp.name]);
 			if (!already) {
-				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node, bp));
+				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node.peerId, bp));
 				uploadedBlueprints.add([node, bp.name]);
 				return { ...bp, id: blueprint };
 			}
@@ -422,7 +427,7 @@ export class Distributor {
 				if (!bp.id) {
 					throw new Error(`Blurptin should be with id to create a service`);
 				}
-				let serviceId = await this.createService(node, bp.id);
+				let serviceId = await this.createService(node.peerId, bp.id);
 				log.warn(`service created ${serviceId} as instance of ${bp.name}@${bp.id}`);
 			}
 		}
