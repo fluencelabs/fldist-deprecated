@@ -75,7 +75,7 @@ const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): 
 
 	// loading from url
 	const url = fileOrUrl.url!;
-	const proto = !url.charAt(4).localeCompare('s') ? https : http;
+	const proto = url.charAt(4).localeCompare('s') ? http : https;
 
 	return new Promise((resolve, reject) => {
 		proto.get(url, (response) => {
