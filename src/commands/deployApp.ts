@@ -140,11 +140,11 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 				mappedDirs: module.config.mapped_dirs,
 			});
 
-			const id = await distributor.uploadModuleToNode(service.node, {
+			const hash = await distributor.uploadModuleToNode(service.node, {
 				base64: base64,
 				config: config,
 			});
-			module.id = id;
+			module.hash = hash;
 		}
 
 		console.log('Creating blueprint for service: ', key);
@@ -180,12 +180,7 @@ const deployApp = async (context: Context, input: string, output: string): Promi
 			node: script.node,
 		};
 
-		const [_particle, promise] = await distributor.runAir(
-			script.node,
-			scriptText,
-			() => {},
-			vars,
-		);
+		const [_particle, promise] = await distributor.runAir(script.node, scriptText, () => {}, vars);
 		await promise;
 	}
 

@@ -185,30 +185,33 @@ export class Distributor {
 		return this.innerClient;
 	}
 
-	async uploadModuleToNode(node: Node, module: Module) {
+	async uploadModuleToNode(node: Node, module: Module): Promise<string> {
 		const client = await this.makeClient(node);
-		log.debug(
-			`uploading module ${module.config.name} to node ${node.peerId} via client ${client.selfPeerId} with config:`,
-		);
-		log.debug(JSON.stringify(module.config, undefined, 2));
 
-		await uploadModule(client, module.config.name, module.base64, module.config, this.ttl);
+		const [req, promise] = new RequestFlowBuilder()
+			.withRawScript(
+				`
+	(seq
+        (call init_relay ("dist" "add_module") [module_bytes module_config] result)
+        (call %init_peer_id% ("callback" "callback") [result])
+
+    )`,
+			)
+			.withVariable('module_bytes', module.base64)
+			.withVariable('module_config', module.config)
+			.withTTL(this.ttl)
+			.buildAsFetch<[string]>('callback', 'callback');
+
+		await client.initiateFlow(req);
+		const [res] = await promise;
+		return res;
 	}
 
 	async uploadBlueprint(node: Node, bp: Blueprint): Promise<string> {
 		const client = await this.makeClient(node);
-		log.warn(
-			`uploading blueprint ${bp.name} to node ${node.peerId} via client ${client.selfPeerId}`,
-		);
+		log.warn(`uploading blueprint ${bp.name} to node ${node.peerId} via client ${client.selfPeerId}`);
 
-		return await addBlueprint(
-			client,
-			bp.name,
-			bp.dependencies,
-			undefined,
-			node.peerId,
-			this.ttl,
-		);
+		return await addBlueprint(client, bp.name, bp.dependencies, undefined, node.peerId, this.ttl);
 	}
 
 	async createService(node: Node, bpId: string): Promise<string> {
@@ -408,9 +411,7 @@ export class Distributor {
 		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
 			const already = uploadedBlueprints.has([node, bp.name]);
 			if (!already) {
-				const blueprint = await promiseRetry({ retries: 3 }, () =>
-					d.uploadBlueprint(node, bp),
-				);
+				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node, bp));
 				uploadedBlueprints.add([node, bp.name]);
 				return { ...bp, id: blueprint };
 			}
@@ -424,10 +425,7 @@ export class Distributor {
 				throw new Error(`can't find blueprint ${name}`);
 			}
 
-			const modules: [
-				string,
-				Module | undefined,
-			][] = blueprint.dependencies.map((moduleName) => [
+			const modules: [string, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
 				moduleName,
 				this.modules.find((m) => m.config.name === moduleName),
 			]);
@@ -438,9 +436,7 @@ export class Distributor {
 					if (module) {
 						await uploadM(this, node, module);
 					} else {
-						throw new Error(
-							`can't find dependency ${nameM} for bluprint ${blueprint.name}`,
-						);
+						throw new Error(`can't find dependency ${nameM} for bluprint ${blueprint.name}`);
 					}
 				}
 				const bp = await uploadB(this, node, blueprint);

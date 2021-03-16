@@ -1,3 +1,4 @@
+import log from 'loglevel';
 import { Context } from '../args';
 import { Distributor, getModule } from '../distributor';
 
@@ -37,6 +38,8 @@ type ConfigArgs = {
 		const distributor = new Distributor(context.nodes, context.ttl, context.seed);
 
 		const module = await getModule(argv.path, argv.name, argv.configPath);
+		log.debug(`uploading module ${module.config.name} to node ${context.node.peerId} with config:`);
+		log.debug(JSON.stringify(module.config, undefined, 2));
 		await distributor.uploadModuleToNode(context.node, module);
 		console.log('module uploaded successfully');
 		process.exit(0);
