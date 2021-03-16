@@ -7,8 +7,7 @@ import Handlebars from 'handlebars';
 import { createConfig, Distributor, loadModule, Module } from '../distributor';
 import { Context } from '../args';
 
-// const identifierPattern = /'[\w][\d\w_]+'/;
-const identifierPattern = /'.+'/;
+const identifierPattern = /'[\w][\d\w_]+'/;
 
 const node = Joi.string();
 
