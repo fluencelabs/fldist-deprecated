@@ -144,7 +144,12 @@ export function args() {
 			argv.context = context;
 		})
 		.middleware(async (argv) => {
-			argv.distributor = await Distributor.create(argv.context as Context);
+			argv.getDistributor = async () => {
+				if (!argv.distributor) {
+					argv.distributor = await Distributor.create(argv.context as Context);
+				}
+				return argv.distributor;
+			};
 		})
 		.option('s', {
 			alias: 'seed',
@@ -171,7 +176,7 @@ export function args() {
 			demandOption: true,
 			describe: 'log level',
 			choices: ['trace', 'debug', 'info', 'warn', 'error'],
-			default: 'info',
+			default: 'error',
 		})
 		.option('ttl', {
 			demandOption: true,

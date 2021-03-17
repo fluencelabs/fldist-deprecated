@@ -35,7 +35,7 @@ type ConfigArgs = {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 
 		const module = await getModule(argv.path, argv.name, argv.configPath);
 		log.debug(`uploading module ${module.config.name} to node ${context.relay.peerId} with config:`);

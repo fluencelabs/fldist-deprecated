@@ -29,7 +29,7 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');
@@ -42,7 +42,9 @@ export default {
 			return {};
 		};
 
-		const [particleId, _promise] = await distributor.runAir(air, callback, argv.data);
+		const [particleId, promise] = await distributor.runAir(air, callback, argv.data);
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
+		await promise;
+		process.exit(0);
 	},
 };
