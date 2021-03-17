@@ -21,7 +21,7 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 		let id = await distributor.uploadBlueprint(context.relay.peerId, {
 			name: argv.name,
 			dependencies: argv.deps,

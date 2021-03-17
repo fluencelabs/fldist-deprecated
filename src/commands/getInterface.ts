@@ -20,7 +20,7 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 
 		const interfaces = await distributor.getInterface(argv.id, context.relay.peerId);
 		if (Boolean(argv.expand)) {

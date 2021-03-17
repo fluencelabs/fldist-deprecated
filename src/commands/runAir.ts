@@ -29,7 +29,7 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');

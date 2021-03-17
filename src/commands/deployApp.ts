@@ -218,7 +218,7 @@ export default {
 	handler: async (argv: any) => {
 		const input: string = argv.i;
 		const output: string = argv.o;
-		await deployApp(argv.distributor, argv.context, input, output);
+		await deployApp(await argv.getDistributor(), argv.context, input, output);
 		process.exit(0);
 	},
 };

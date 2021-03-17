@@ -28,7 +28,7 @@ export default {
 	},
 	handler: async (argv) => {
 		const context: Context = argv.context;
-		const distributor: Distributor = argv.distributor;
+		const distributor: Distributor = await argv.getDistributor();
 
 		const node = context.relay;
 		const blueprintName = argv.name as string;
