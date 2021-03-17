@@ -18,6 +18,7 @@ export default {
 			.option('d', {
 				alias: 'data',
 				demandOption: true,
+				default: '{}',
 				describe: 'Data for air script in json',
 				type: 'string',
 			})

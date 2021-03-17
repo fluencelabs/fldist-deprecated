@@ -1,6 +1,6 @@
 {
 	"name": "@fluencelabs/fldist",
-	"version": "0.3.4",
+	"version": "0.3.9",
 	"keywords": [
 		"typescript",
 		"template"
@@ -29,8 +29,7 @@
 		"clean:all": "npm run clean && (rm -r ./node_modules || true)",
 		"lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
 		"test": "mocha",
-		"build": "npm run clean && npm run tsc",
-		"build_": "npm run clean && npm run tsc && awk 'NR==2 {print \"Function=Function//;NODE_PATH=\\\"$(dirname $0)\\\"/../lib/node_modules/@fluencelabs/fldist/node_modules/ node -r esm \\\"$0\\\" \\\"$@\\\"; exit\"} 1' ./dist/index.js > ./dist/index.js.tmp && mv ./dist/index.js.tmp ./dist/index.js"
+		"build": "npm run clean && npm run tsc"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.6",

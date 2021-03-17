@@ -98,15 +98,25 @@ export function args() {
 			let node: Node | undefined = undefined;
 			let node_id = maybeString(argv, 'node-id');
 			let node_addr = maybeString(argv, 'node-addr');
-			if (defined(node_id) && defined(node_addr)) {
+			if (defined(node_addr)) {
 				let splitted = node_addr.split('/');
 				let last = splitted[splitted.length - 1];
+				// account for the leading slash
 				let penult = splitted[splitted.length - 2];
+				// if node_addr doesn't contain /p2p/<peerId>, then set it from --node-id
 				if (!last.startsWith('12D3') && !penult.startsWith('12D3')) {
-					// add node_id to multiaddr if there is no peer_id in multiaddr
-					splitted.push('p2p');
-					splitted.push(node_id);
-					node_addr = splitted.join('/');
+					if (defined(node_id)) {
+						// add node_id to multiaddr if there is no peer_id in multiaddr
+						splitted.push('p2p');
+						splitted.push(node_id);
+						node_addr = splitted.join('/');
+					} else {
+						console.error(`Error:\n Missing --node-id`);
+						process.exit(1);
+					}
+				} else {
+					// if node_addr contains peer id, ignore --node-id
+					node_id = last.startsWith('12D3') ? last : penult;
 				}
 				node = {
 					peerId: node_id,
