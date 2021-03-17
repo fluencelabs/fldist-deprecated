@@ -176,7 +176,7 @@ export function args() {
 			demandOption: true,
 			describe: 'log level',
 			choices: ['trace', 'debug', 'info', 'warn', 'error'],
-			default: 'info',
+			default: 'error',
 		})
 		.option('ttl', {
 			demandOption: true,

@@ -137,6 +137,14 @@ export class Distributor {
 		this.modules = [];
 	}
 
+	async closeClient(): Promise<void> {
+		if (!this.client) {
+			return;
+		}
+
+		await this.client.disconnect();
+	}
+
 	async load_modules() {
 		this.modules = [
 			{
