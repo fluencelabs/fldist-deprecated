@@ -4,7 +4,7 @@ import https from 'https';
 import path from 'path';
 import Joi from 'joi';
 import Handlebars from 'handlebars';
-import { createConfig, Distributor, loadModule, Module } from '../distributor';
+import { createConfig, Distributor } from '../distributor';
 import { Context } from '../args';
 
 const identifierPattern = /'[\w][\d\w_]+'/;
@@ -133,6 +133,7 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 				preopenedFiles: module.config.preopened_files,
 				mappedDirs: module.config.mapped_dirs,
 			});
+			console.log('with config: ', config);
 
 			const hash = await distributor.uploadModuleToNode(service.node, {
 				base64: base64,
@@ -174,7 +175,14 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 			node: script.node,
 		};
 
-		const [_particle, promise] = await distributor.runAir(scriptText, () => {}, vars);
+		const [_particle, promise] = await distributor.runAir(
+			scriptText,
+			(args) => {
+				const [res] = args;
+				console.log('Script execution result: ', res);
+			},
+			vars,
+		);
 		await promise;
 	}
 

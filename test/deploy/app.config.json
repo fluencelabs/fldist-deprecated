@@ -12,7 +12,10 @@
 	"modules": {
 		"history_inmemory": {
 			"file": "history.wasm",
-			"config": {}
+			"config": {
+				"preopened_files": ["/tmp"],
+				"mapped_dirs": { "history": "/tmp" }
+			}
 		},
 		"user_list_inmemory": {
 			"file": "user_list.wasm",
