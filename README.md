@@ -1,48 +1,37 @@
-# Fluence service distributor
-Can distribute modules, blueprints and create services.
+# fldist
+Tool to manage services on & interfact with the Fluence Network
 
-## Running
-```shell
-npm i
-npm run run 
 ```
+$ fldist --help
+Usage: fldist <cmd> [options]
 
-## Help to get all commands
-```shell
-npm run cli --help
+Commands:
+  fldist completion      generate completion script
+  fldist upload          Upload selected wasm
+  fldist get_modules     Print all modules on a node
+  fldist get_interfaces  Print all services on a node
+  fldist get_interface   Print a service interface
+  fldist add_blueprint   Add a blueprint
+  fldist create_service  Create a service from existing blueprint
+  fldist new_service     Create service from a list of modules
+  fldist deploy_app      Deploy application
+  fldist create_keypair  Generates a random keypair
+  fldist run_air         Send an air script from a file. Send arguments to
+                         "returnService" back to the client to print them in the
+                         console. More examples in "scripts_examples" directory.
+  fldist env             show nodes in currently selected environment
+
+Options:
+      --help             Show help                                     [boolean]
+      --version          Show version number                           [boolean]
+  -s, --seed             Client seed                                    [string]
+      --env              Environment to use
+            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+      --node-id, --node  PeerId of the node to use
+      --node-addr        Multiaddr of the node to use
+      --log              log level
+       [required] [choices: "trace", "debug", "info", "warn", "error"] [default:
+                                                                         "info"]
+      --ttl              particle time to live in ms
+                                            [number] [required] [default: 60000]
 ```
-
-Air scripts examples is in `scripts_examples` direcotory
-
-## Distribute basic services to Fluence network
-
-From console you can call
-```shell
-npm run cli distribute
-```
-
-
-
-In browser, open console, and call `await distribute()`;
-
-## Changing configuration
-Take a look at function `distribute` at the bottom of `index.ts`:
-```typescript
-export async function distribute() {
-	Fluence.setLogLevel('warn');
-	const nodes = faasNetHttps;
-	const distributor = new Distributor(nodes);
-	await distributor.distributeServices(nodes[0], new Map([
-		['SQLite 3', [1, 2, 3, 4]],
-		['User List', [1, 2, 3, 4]],
-		['Message History', [1, 2, 3, 4]],
-	])).then(_ => console.log('finished'));
-}
-```
-
-It calls `distributor.distributeServices`, passing service distribution:
-- Create service `SQLite 3` on nodes with indexes 1, 2, 3 and 4. 
-- Create service `User List` on nodes with indexes 1, 2, 3 and 4. 
-- Create service `Message History` on nodes with indexes 1, 2, 3 and 4.
-
-You can change distribution as you wish, and add new blueprints at the top of `index.ts`.
