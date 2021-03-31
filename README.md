@@ -1,37 +1,43 @@
-# fldist
-Tool to manage services on & interfact with the Fluence Network
+# Fluence proto-distributor
+[![npm](https://img.shields.io/npm/v/@fluencelabs/fldist)](https://www.npmjs.com/package/@fluencelabs/fldist)
 
+Tool to manage services on & interact with the Fluence Network
+
+## About Fluence
+
+Fluence is an open application platform where apps can build on each other, share data and users
+
+|         Layer         |                                                               Tech                                                                |              Scale               |               State               |                                                   Based on                                                    |
+| :-------------------: | :-------------------------------------------------------------------------------------------------------------------------------: | :------------------------------: | :-------------------------------: | :-----------------------------------------------------------------------------------------------------------: |
+|       Execution       |                                             [FCE](https://github.com/fluencelabs/fce)                                             |           Single peer            | Disk, network, external processes | Wasm, [IT](https://github.com/fluencelabs/interface-types), [Wasmer\*](https://github.com/fluencelabs/wasmer) |
+|      Composition      |                                      [Aquamarine](https://github.com/fluencelabs/aquamarine)                                      |          Involved peers          |      Results and signatures       |                                                 ⇅, π-calculus                                                 |
+|       Topology        | [TrustGraph](https://github.com/fluencelabs/fluence/tree/master/trust-graph), [DHT\*](https://github.com/fluencelabs/rust-libp2p) | Distributed with Kademlia\* algo |    Actual state of the network    |                                [libp2p](https://github.com/libp2p/rust-libp2p)                                |
+| Security & Accounting |                                                            Blockchain                                                             |          Whole network           |        Licenses & payments        |                                                  substrate?                                                   |
+
+<img alt="aquamarine scheme" align="center" src="doc/stack.png"/>
+
+## Installation
+
+With npm
+
+```bash
+npm install -g @fluencelabs/fldist
 ```
-$ fldist --help
-Usage: fldist <cmd> [options]
 
-Commands:
-  fldist completion      generate completion script
-  fldist upload          Upload selected wasm
-  fldist get_modules     Print all modules on a node
-  fldist get_interfaces  Print all services on a node
-  fldist get_interface   Print a service interface
-  fldist add_blueprint   Add a blueprint
-  fldist create_service  Create a service from existing blueprint
-  fldist new_service     Create service from a list of modules
-  fldist deploy_app      Deploy application
-  fldist create_keypair  Generates a random keypair
-  fldist run_air         Send an air script from a file. Send arguments to
-                         "returnService" back to the client to print them in the
-                         console. More examples in "scripts_examples" directory.
-  fldist env             show nodes in currently selected environment
+With yarn
 
-Options:
-      --help             Show help                                     [boolean]
-      --version          Show version number                           [boolean]
-  -s, --seed             Client seed                                    [string]
-      --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
-      --node-id, --node  PeerId of the node to use
-      --node-addr        Multiaddr of the node to use
-      --log              log level
-       [required] [choices: "trace", "debug", "info", "warn", "error"] [default:
-                                                                         "info"]
-      --ttl              particle time to live in ms
-                                            [number] [required] [default: 60000]
+```bash
+yarn global add @fluencelabs/fldist
 ```
+
+## Usage
+
+See [usage](doc/USAGE.MD)
+
+## Contributing
+
+While the project is still in the early stages of development, you are welcome to track progress and contribute. As the project is undergoing rapid changes, interested contributors should contact the team before embarking on larger pieces of work. All contributors should consult with and agree to our [basic contributing rules](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)
