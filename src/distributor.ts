@@ -1,5 +1,4 @@
 import log from 'loglevel';
-import promiseRetry from 'promise-retry';
 import { promises as fs } from 'fs';
 import {
 	addBlueprint,
@@ -143,47 +142,6 @@ export class Distributor {
 		}
 
 		await this.client.disconnect();
-	}
-
-	async load_modules() {
-		this.modules = [
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
-				config: createConfig({
-					name: 'curl_adapter',
-					mountedBinaries: { curl: '/usr/bin/curl' },
-					preopenedFiles: ['/tmp'],
-				}),
-			},
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
-				config: createConfig({
-					name: 'local_storage',
-					preopenedFiles: ['/tmp'],
-					mappedDirs: { sites: '/tmp' },
-				}),
-			},
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
-				config: createConfig({ name: 'facade_url_downloader' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/sqlite3.wasm'),
-				config: createConfig({ name: 'sqlite3' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/user-list.wasm'),
-				config: createConfig({ name: 'userlist' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/history.wasm'),
-				config: createConfig({ name: 'history' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/redis.wasm'),
-				config: createConfig({ name: 'redis' }),
-			},
-		];
 	}
 
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
@@ -361,83 +319,5 @@ export class Distributor {
 
 		await this.client.initiateFlow(request);
 		await promise;
-	}
-
-	async uploadAllModules(node: string) {
-		for await (const module of this.modules) {
-			await this.uploadModuleToNode(node, module);
-		}
-	}
-
-	async uploadAllModulesToAllNodes() {
-		for await (const node of this.nodes) {
-			await this.uploadAllModules(node.peerId);
-		}
-	}
-
-	async uploadAllBlueprints(node: Node) {
-		for await (const bp of this.blueprints) {
-			await this.uploadBlueprint(node.peerId, bp);
-		}
-	}
-
-	async uploadAllBlueprintsToAllNodes() {
-		for await (const node of this.nodes) {
-			await this.uploadAllBlueprints(node);
-		}
-	}
-
-	async distributeServices(relay: Node, distribution: Map<string, number[]>) {
-		// Cache information about uploaded modules & blueprints to avoid uploading them several times
-		const uploadedModules = new Set<[Node, string]>();
-		const uploadedBlueprints = new Set<[Node, string]>();
-
-		async function uploadM(d: Distributor, node: Node, module: Module) {
-			const already = uploadedModules.has([node, module.config.name]);
-			if (!already) {
-				await promiseRetry({ retries: 3 }, () => d.uploadModuleToNode(node.peerId, module));
-			}
-			uploadedModules.add([node, module.config.name]);
-		}
-
-		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
-			const already = uploadedBlueprints.has([node, bp.name]);
-			if (!already) {
-				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node.peerId, bp));
-				uploadedBlueprints.add([node, bp.name]);
-				return { ...bp, id: blueprint };
-			}
-
-			return bp;
-		}
-
-		for await (const [name, nodes] of distribution.entries()) {
-			const blueprint = this.blueprints.find((bp) => bp.name === name);
-			if (!blueprint) {
-				throw new Error(`can't find blueprint ${name}`);
-			}
-
-			const modules: [string, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
-				moduleName,
-				this.modules.find((m) => m.config.name === moduleName),
-			]);
-
-			for await (const idx of nodes) {
-				const node = this.nodes[idx];
-				for await (const [nameM, module] of modules) {
-					if (module) {
-						await uploadM(this, node, module);
-					} else {
-						throw new Error(`can't find dependency ${nameM} for bluprint ${blueprint.name}`);
-					}
-				}
-				const bp = await uploadB(this, node, blueprint);
-				if (!bp.id) {
-					throw new Error(`Blurptin should be with id to create a service`);
-				}
-				let serviceId = await this.createService(node.peerId, bp.id);
-				log.warn(`service created ${serviceId} as instance of ${bp.name}@${bp.id}`);
-			}
-		}
 	}
 }
