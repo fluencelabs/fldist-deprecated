@@ -19,11 +19,10 @@ module.exports = {
 	rules: {
 		'func-names': ['error', 'as-needed'],
 		'prefer-destructuring': 'off',
+		'object-shorthand': ['error', 'consistent-as-needed'],
+		'no-restricted-syntax': ['error', 'ForInStatement', 'LabeledStatement', 'WithStatement'],
 
 		'import/prefer-default-export': 'off',
-
-		'object-shorthand': ['error', 'consistent-as-needed'],
-
 		'import/extensions': [
 			'error',
 			'ignorePackages',
@@ -42,6 +41,7 @@ module.exports = {
 		// should be overriden for current project only
 		'no-param-reassign': ['error', { props: false }],
 		'no-console': 'off',
+		'@typescript-eslint/explicit-module-boundary-types': 'off',
 	},
 	settings: {
 		'import/extensions': ['.js', '.ts', '.jsx', '.tsx'],

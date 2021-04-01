@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { promises as fs } from 'fs';
 import http from 'http';
 import https from 'https';
@@ -114,18 +115,16 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 
 	const value = res.value;
 
-	for (let key in value.services) {
-		const service = value.services[key];
-
+	for (const [key, service] of Object.entries<any>(value.services)) {
 		console.log('Loading dependencies for service: ', key);
-		for (let depName of service.dependencies) {
+		for (const depName of service.dependencies) {
 			const module = value.modules[depName];
 			if (!module) {
 				throw new Error(`Couldn't find module ${depName} for service, ${key}`);
 			}
 
 			console.log('Creating module: ', depName);
-			const data = await load({ file: module.file, url: module.url, root });
+			const data = await load({ file: module.file, url: module.url, root: root });
 			const base64 = data.toString('base64');
 			const config = createConfig({
 				name: depName,
@@ -136,8 +135,8 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 			console.log('with config: ', config);
 
 			const hash = await distributor.uploadModuleToNode(service.node, {
-				base64: base64,
-				config: config,
+				base64,
+				config,
 			});
 			module.hash = hash;
 		}
@@ -155,18 +154,17 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 	}
 
 	console.log('Preparing variables...');
-	let variables: Record<string, any> = {};
-	for (let key in value.services) {
+	const variables: Record<string, any> = {};
+	for (const key of Object.keys(value.services)) {
 		variables[key] = value.services[key].id;
-		variables[key + '__node'] = value.services[key].node;
+		variables[`${key}__node`] = value.services[key].node;
 	}
 	console.log(variables);
 
-	for (let key in value.scripts) {
+	for (const [key, script] of Object.entries<any>(value.scripts)) {
 		console.log('Running script: ', key);
 
-		const script = value.scripts[key];
-		const data = await load({ file: script.file, url: script.url, root });
+		const data = await load({ file: script.file, url: script.url, root: root });
 		const scriptText = data.toString('utf-8');
 
 		const vars = {
@@ -178,20 +176,18 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 		const [_particle, promise] = await distributor.runAir(
 			scriptText,
 			(args) => {
-				const [res] = args;
-				console.log('Script execution result: ', res);
+				const [scriptExecResult] = args;
+				console.log('Script execution result: ', scriptExecResult);
 			},
 			vars,
 		);
 		await promise;
 	}
 
-	for (let key in value.script_storage) {
+	for (const [key, script] of Object.entries<any>(value.script_storage)) {
 		console.log('Adding script to script_storage: ', key);
 
-		const script = value.script_storage[key];
-
-		const data = await load({ file: script.file, url: script.url, root });
+		const data = await load({ file: script.file, url: script.url, root: root });
 		const text = data.toString('utf-8');
 		const readyText = Handlebars.compile(text, { strict: true })(variables);
 
