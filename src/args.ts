@@ -2,7 +2,7 @@ import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
 import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
 import { testNet, dev, Node } from '@fluencelabs/fluence-network-environment';
-import hideBin from 'yargs/helpers';
+import { hideBin } from 'yargs/helpers';
 
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
@@ -142,6 +142,13 @@ export function args() {
 				}
 				return argv.distributor;
 			};
+		})
+		.option('v', {
+			alias: 'verbose',
+			demandOption: false,
+			describe: 'Display verbose information such as created client seed + peer Id and relay peer id',
+			type: 'boolean',
+			default: false,
 		})
 		.option('s', {
 			alias: 'seed',

@@ -82,7 +82,7 @@ export class Distributor {
 
 	ttl: number;
 
-	static create = async (context: Context): Promise<Distributor> => {
+	static create = async (context: Context, verbose = false): Promise<Distributor> => {
 		let peerId;
 		let seed = context.seed;
 		if (seed) {
@@ -92,9 +92,11 @@ export class Distributor {
 			seed = peerIdToSeed(peerId);
 		}
 
-		console.log(`client seed: ${seed}`);
-		console.log(`client peerId: ${peerId.toB58String()}`);
-		console.log(`relay peerId: ${context.relay.peerId}`);
+		if (verbose) {
+			console.log(`client seed: ${seed}`);
+			console.log(`client peerId: ${peerId.toB58String()}`);
+			console.log(`relay peerId: ${context.relay.peerId}`);
+		}
 
 		const client = await createClient(context.relay, context.seed);
 		return new Distributor(context.nodes, context.ttl, client);
@@ -241,6 +243,7 @@ export class Distributor {
 		air: string,
 		callback: (args, tetraplets) => void,
 		data?: Map<string, any> | Record<string, any>,
+		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
@@ -250,10 +253,15 @@ export class Distributor {
 				.withVariable('returnService', 'returnService')
 				.withVariables(data || new Map())
 				.configHandler((h) => {
-					h.onEvent('returnService', 'run', callback);
-					resolve();
+					h.onEvent('returnService', 'run', (args, tetraplets) => {
+						callback(args, tetraplets);
+						if (!multipleResults) {
+							resolve();
+						}
+					});
 				})
-				.handleScriptError(reject);
+				.handleScriptError(reject)
+				.handleTimeout(multipleResults ? resolve : reject);
 
 			request = b.build();
 		});
