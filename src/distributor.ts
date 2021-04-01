@@ -16,7 +16,7 @@ import {
 import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
-import { Context } from './args';
+import { Context } from './types';
 
 export type Module = {
 	base64: string;
@@ -27,29 +27,6 @@ export async function loadModule(path: string): Promise<string> {
 	const data = await fs.readFile(path);
 	return data.toString('base64');
 }
-
-export async function getModule(path: string, name?: string, configPath?: string): Promise<Module> {
-	let config;
-	if (configPath) {
-		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
-	} else if (name) {
-		config = createConfig({ name });
-	} else {
-		throw new Error(`either --config or --name must be specified`);
-	}
-	return { base64: await loadModule(path), config: config };
-}
-
-export async function getFileContent(path: string): Promise<string> {
-	const data = await fs.readFile(path);
-	return data.toString();
-}
-
-type Blueprint = {
-	id?: string;
-	name: string;
-	dependencies: string[];
-};
 
 type ConfigArgs = {
 	name: string;
@@ -70,6 +47,29 @@ export function createConfig(args: ConfigArgs): ModuleConfig {
 		},
 	};
 }
+
+export async function getFileContent(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString();
+}
+
+export async function getModule(path: string, name?: string, configPath?: string): Promise<Module> {
+	let config;
+	if (configPath) {
+		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
+	} else if (name) {
+		config = createConfig({ name });
+	} else {
+		throw new Error(`either --config or --name must be specified`);
+	}
+	return { base64: await loadModule(path), config: config };
+}
+
+type Blueprint = {
+	id?: string;
+	name: string;
+	dependencies: string[];
+};
 
 export class Distributor {
 	blueprints: Blueprint[];
@@ -92,9 +92,9 @@ export class Distributor {
 			seed = peerIdToSeed(peerId);
 		}
 
-		console.log('client seed: ' + seed);
-		console.log('client peerId: ' + peerId.toB58String());
-		console.log('relay peerId: ' + context.relay.peerId);
+		console.log(`client seed: ${seed}`);
+		console.log(`client peerId: ${peerId.toB58String()}`);
+		console.log(`relay peerId: ${context.relay.peerId}`);
 
 		const client = await createClient(context.relay, context.seed);
 		return new Distributor(context.nodes, context.ttl, client);
@@ -172,11 +172,11 @@ export class Distributor {
 	async uploadBlueprint(node: string, bp: Blueprint): Promise<string> {
 		log.warn(`uploading blueprint ${bp.name} to node ${node} via client ${this.client.selfPeerId}`);
 
-		return await addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
+		return addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
 	}
 
 	async createService(node: string, bpId: string): Promise<string> {
-		return await fluenceCreateService(this.client, bpId, node, this.ttl);
+		return fluenceCreateService(this.client, bpId, node, this.ttl);
 	}
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
@@ -197,25 +197,24 @@ export class Distributor {
 			)
 			.withVariable('node', node)
 			.withVariables({ alias, serviceId })
-			.buildAsFetch('callback', 'callback');
+			.buildAsFetch<void>('callback', 'callback');
 
 		await this.client.initiateFlow(request);
-		await promise;
-		return;
+		return promise;
 	}
 
-	async getModules(node: string): Promise<string[]> {
-		return await getMod(this.client, this.ttl);
+	async getModules(_node: string): Promise<string[]> {
+		return getMod(this.client, this.ttl);
 	}
 
-	async getInterfaces(node: string): Promise<string[]> {
+	async getInterfaces(_node: string): Promise<string[]> {
 		console.log(this.ttl);
-		return await getInter(this.client, this.ttl);
+		return getInter(this.client, this.ttl);
 	}
 
 	async getInterface(serviceId: string, node: string): Promise<string[]> {
-		let callbackFn = 'getInterface';
-		let script = `
+		const callbackFn = 'getInterface';
+		const script = `
             (seq
 				(call init_relay ("op" "identity") [])
 				(seq 
@@ -227,12 +226,12 @@ export class Distributor {
 				)
             )
         `;
-		let data = {
+		const data = {
 			node: node,
 			myPeerId: this.client.selfPeerId,
 			serviceId: serviceId,
 		};
-		let particle = new Particle(script, data, this.ttl);
+		const particle = new Particle(script, data, this.ttl);
 
 		const [res] = await sendParticleAsFetch<[string[]]>(this.client, particle, callbackFn);
 		return res;
@@ -243,22 +242,18 @@ export class Distributor {
 		callback: (args, tetraplets) => void,
 		data?: Map<string, any> | Record<string, any>,
 	): Promise<[string, Promise<void>]> {
-		data = data || new Map();
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
 				.withRawScript(air)
 				.withVariable('relay', this.client.relayPeerId)
 				.withVariable('returnService', 'returnService')
+				.withVariables(data || new Map())
 				.configHandler((h) => {
 					h.onEvent('returnService', 'run', callback);
 					resolve();
 				})
 				.handleScriptError(reject);
-
-			if (data) {
-				b.withVariables(data);
-			}
 
 			request = b.build();
 		});

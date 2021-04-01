@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import log from 'loglevel';
-import { Context } from '../args';
 import { Distributor } from '../distributor';
 
 export default {
@@ -22,13 +21,12 @@ export default {
 				describe: 'Data for air script in json',
 				type: 'string',
 			})
-			.coerce('data', function (arg) {
+			.coerce('data', (arg) => {
 				const dataJson = JSON.parse(arg);
 				return new Map(Object.entries(dataJson));
 			});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
 		const distributor: Distributor = await argv.getDistributor();
 
 		const fileData = await fs.readFile(argv.path);

@@ -1,4 +1,4 @@
-import { Context } from '../args';
+import { Context } from '../types';
 
 export default {
 	command: 'env',
@@ -11,12 +11,12 @@ export default {
 			default: false,
 		});
 	},
-	handler: (argv) => {
-		const context: Context = argv.context;
+	handler: (argv): Promise<void> => {
+		const context = argv.context as Context;
 		if (argv.json) {
 			console.log(JSON.stringify(context.nodes, undefined, 2));
 		} else {
-			let env = context.nodes.map((n) => n.multiaddr).join('\n');
+			const env = context.nodes.map((n) => n.multiaddr).join('\n');
 			console.log(env);
 		}
 		process.exit(0);

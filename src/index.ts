@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 
-import { setLogLevel } from '@fluencelabs/fluence';
-import yargs from 'yargs';
 import { args } from './args';
 import { Distributor } from './distributor';
-
-export const DEFAULT_NODE_IDX = 3;
 
 const main = async () => {
 	if (typeof process !== 'object') {

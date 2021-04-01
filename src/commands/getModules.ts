@@ -1,4 +1,4 @@
-import { Context } from '../args';
+import { Context } from '../types';
 import { Distributor } from '../distributor';
 
 export default {
@@ -11,10 +11,10 @@ export default {
 			type: 'boolean',
 		});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
+		const context = argv.context as Context;
 		const distributor: Distributor = await argv.getDistributor();
-		let modules = await distributor.getModules(context.relay.peerId);
+		const modules = await distributor.getModules(context.relay.peerId);
 
 		if (argv.pretty) {
 			console.log(JSON.stringify(modules, undefined, 2));

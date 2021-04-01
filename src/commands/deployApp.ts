@@ -4,8 +4,8 @@ import https from 'https';
 import path from 'path';
 import Joi from 'joi';
 import Handlebars from 'handlebars';
+import { Context } from 'src/types';
 import { createConfig, Distributor } from '../distributor';
-import { Context } from '../args';
 
 const identifierPattern = /'[\w][\d\w_]+'/;
 
@@ -70,7 +70,7 @@ const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): 
 			file = path.join(fileOrUrl.root, file);
 		}
 
-		return await fs.readFile(file);
+		return fs.readFile(file);
 	}
 
 	// loading from url
@@ -90,10 +90,10 @@ const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): 
 				.on('data', (chunk) => {
 					data.push(chunk);
 				})
-				.on('end', function () {
-					//at this point data is an array of Buffers
-					//so Buffer.concat() can make us a new Buffer
-					//of all of them together
+				.on('end', () => {
+					// at this point data is an array of Buffers
+					// so Buffer.concat() can make us a new Buffer
+					// of all of them together
 					const buffer = Buffer.concat(data);
 					resolve(buffer);
 				});
@@ -223,7 +223,7 @@ export default {
 				type: 'string',
 			});
 	},
-	handler: async (argv: any) => {
+	handler: async (argv: any): Promise<void> => {
 		const input: string = argv.i;
 		const output: string = argv.o;
 		await deployApp(await argv.getDistributor(), argv.context, input, output);
