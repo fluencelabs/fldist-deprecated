@@ -394,20 +394,27 @@ client to print them in the console. More examples in "scripts_examples"
 directory.
 
 Options:
-      --help             Show help                                     [boolean]
-      --version          Show version number                           [boolean]
-  -s, --seed             Client seed                                    [string]
-      --env              Environment to use
+      --help              Show help                                    [boolean]
+      --version           Show version number                          [boolean]
+  -v, --verbose           Display verbose information such as created client
+                          seed + peer Id and relay peer id
+                                                      [boolean] [default: false]
+  -s, --seed              Client seed                                   [string]
+      --env               Environment to use
             [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
-      --node-id, --node  PeerId of the node to use
-      --node-addr        Multiaddr of the node to use
-      --log              log level
+      --node-id, --node   PeerId of the node to use
+      --node-addr         Multiaddr of the node to use
+      --log               log level
        [required] [choices: "trace", "debug", "info", "warn", "error"] [default:
                                                                         "error"]
-      --ttl              particle time to live in ms
+      --ttl               particle time to live in ms
                                             [number] [required] [default: 60000]
-  -p, --path             Path to air script                  [string] [required]
-  -d, --data             Data for air script in json
+  -e, --expand            Show expanded information from network interaction
+                          such as particle tetraplets [boolean] [default: false]
+  -m, --multiple-results  Continiously await for multiple results instead of
+                          returning a single one      [boolean] [default: false]
+  -p, --path              Path to air script                 [string] [required]
+  -d, --data              Data for air script in json
                                              [string] [required] [default: "{}"]
 ```
 
