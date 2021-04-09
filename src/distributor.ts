@@ -93,9 +93,11 @@ export class Distributor {
 			seed = peerIdToSeed(peerId);
 		}
 
-		console.log('client seed: ' + seed);
-		console.log('client peerId: ' + peerId.toB58String());
-		console.log('relay peerId: ' + context.relay.peerId);
+		if (!context.quiet) {
+			console.log('client seed: ' + seed);
+			console.log('client peerId: ' + peerId.toB58String());
+			console.log('relay peerId: ' + context.relay.peerId);
+		}
 
 		const client = await createClient(context.relay, context.seed);
 		return new Distributor(context.nodes, context.ttl, client);

@@ -53,12 +53,13 @@ export interface Context {
 	env: Env;
 	ttl: number;
 	seed: string;
+	quiet: boolean;
 }
 
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
-		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
+		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl', 'quiet'])
 		.scriptName('fldist')
 		.completion()
 		.demandCommand()
@@ -134,12 +135,14 @@ export function args() {
 			}
 
 			let ttl = argv.ttl as number;
+			let quiet = argv.quiet as boolean;
 			const context: Context = {
 				nodes: nodes,
 				relay: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
 				seed: argv.seed as string,
 				env: env,
 				ttl: ttl,
+				quiet: quiet,
 			};
 			argv.context = context;
 		})
@@ -183,6 +186,13 @@ export function args() {
 			describe: 'particle time to live in ms',
 			type: 'number',
 			default: 60000,
+		})
+		.option('q', {
+			alias: 'quiet',
+			demandOption: false,
+			describe: 'if passed, do not print peer id and seed info',
+			type: 'boolean',
+			default: false,
 		})
 		.command(upload)
 		.command(getModules)
