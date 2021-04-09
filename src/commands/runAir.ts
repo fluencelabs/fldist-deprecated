@@ -45,6 +45,6 @@ export default {
 		const [particleId, promise] = await distributor.runAir(air, callback, argv.data);
 		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		await promise;
-		process.exit(0);
+		// process.exit(0);
 	},
 };
