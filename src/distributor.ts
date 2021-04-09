@@ -293,8 +293,10 @@ export class Distributor {
 				.withVariable('relay', this.client.relayPeerId)
 				.withVariable('returnService', 'returnService')
 				.configHandler((h) => {
-					h.onEvent('returnService', 'run', callback);
-					resolve();
+					h.onEvent('returnService', 'run', (args, tetraplets) => {
+						callback(args, tetraplets);
+						resolve();
+					});
 				})
 				.handleScriptError(reject);
 
