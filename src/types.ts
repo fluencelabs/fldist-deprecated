@@ -8,4 +8,5 @@ export interface Context {
 	env: Env;
 	ttl: number;
 	seed: string;
+	verbose: boolean;
 }

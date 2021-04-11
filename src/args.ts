@@ -50,7 +50,7 @@ const local = [
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
-		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl'])
+		.global(['seed', 'env', 'node-id', 'node-addr', 'log', 'ttl', 'quiet'])
 		.scriptName('fldist')
 		.completion()
 		.demandCommand()
@@ -132,6 +132,7 @@ export function args() {
 				seed: argv.seed as string,
 				env: env,
 				ttl: ttl,
+				verbose: argv.verbose as boolean,
 			};
 			argv.context = context;
 		})

@@ -82,7 +82,7 @@ export class Distributor {
 
 	ttl: number;
 
-	static create = async (context: Context, verbose = false): Promise<Distributor> => {
+	static create = async (context: Context): Promise<Distributor> => {
 		let peerId;
 		let seed = context.seed;
 		if (seed) {
@@ -92,7 +92,7 @@ export class Distributor {
 			seed = peerIdToSeed(peerId);
 		}
 
-		if (verbose) {
+		if (context.verbose) {
 			console.log(`client seed: ${seed}`);
 			console.log(`client peerId: ${peerId.toB58String()}`);
 			console.log(`relay peerId: ${context.relay.peerId}`);

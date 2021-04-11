@@ -7,20 +7,6 @@ export default {
 		'Send an air script from a file. Send arguments to "returnService" back to the client to print them in the console. More examples in "scripts_examples" directory.',
 	builder: (yargs) => {
 		return yargs
-			.option('e', {
-				alias: 'expand',
-				demandOption: false,
-				describe: 'Show expanded information from network interaction such as particle tetraplets',
-				type: 'boolean',
-				default: false,
-			})
-			.option('m', {
-				alias: 'multiple-results',
-				demandOption: false,
-				describe: 'Continiously await for multiple results instead of returning a single one',
-				type: 'boolean',
-				default: false,
-			})
 			.option('p', {
 				alias: 'path',
 				demandOption: true,
@@ -33,6 +19,20 @@ export default {
 				default: '{}',
 				describe: 'Data for air script in json',
 				type: 'string',
+			})
+			.option('w', {
+				alias: 'wait',
+				demandOption: false,
+				default: false,
+				type: 'boolean',
+				describe: 'Do not exit after the first particle',
+			})
+			.option('t', {
+				alias: 'tetraplets',
+				demandOption: false,
+				default: false,
+				type: 'boolean',
+				describe: 'If passed, print tetraplets',
 			})
 			.coerce('data', (arg) => {
 				const dataJson = JSON.parse(arg);
@@ -47,7 +47,7 @@ export default {
 
 		const callback = (args, tetraplets) => {
 			const strResult = JSON.stringify(args, undefined, 2);
-			if (argv.e) {
+			if (argv.tetraplets) {
 				console.log('===================');
 				console.log(strResult);
 				console.log('===================');
@@ -59,8 +59,8 @@ export default {
 			return {};
 		};
 
-		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, argv.m);
-		if (argv.e) {
+		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, !argv.wait);
+		if (argv.wait) {
 			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}
 		await promise;
