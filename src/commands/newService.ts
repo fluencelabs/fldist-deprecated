@@ -1,6 +1,6 @@
-import { Context } from '../args';
-import { Distributor, getModule } from '../distributor';
 import { v4 as uuidv4 } from 'uuid';
+import { Context } from '../types';
+import { Distributor, getModule } from '../distributor';
 
 export default {
 	command: 'new_service',
@@ -26,8 +26,8 @@ export default {
 				type: 'string',
 			});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
+		const context = argv.context as Context;
 		const distributor: Distributor = await argv.getDistributor();
 
 		const node = context.relay;
@@ -36,16 +36,17 @@ export default {
 
 		// upload modules
 		const modules = await Promise.all(moduleConfigs.map((m) => getModule(m.wasmPath, undefined, m.configPath)));
-		for (const module of modules) {
-			await distributor.uploadModuleToNode(node.peerId, module);
-		}
+		const promises = modules.map((module) => {
+			return distributor.uploadModuleToNode(node.peerId, module);
+		});
+		await Promise.all(promises);
 
 		// create blueprints
 		const dependencies = modules.map((m) => m.config.name);
 		const blueprintId = await distributor.uploadBlueprint(node.peerId, {
 			name: blueprintName,
 			id: uuidv4(),
-			dependencies,
+			dependencies: dependencies,
 		});
 
 		// create service

@@ -1,4 +1,4 @@
-import { Context } from '../args';
+import { Context } from '../types';
 import { Distributor } from '../distributor';
 
 export default {
@@ -19,10 +19,10 @@ export default {
 				type: 'string',
 			});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
+		const context = argv.context as Context;
 		const distributor: Distributor = await argv.getDistributor();
-		let id = await distributor.uploadBlueprint(context.relay.peerId, {
+		const id = await distributor.uploadBlueprint(context.relay.peerId, {
 			name: argv.name,
 			dependencies: argv.deps,
 		});

@@ -6,7 +6,7 @@ export default {
 	builder: (yargs) => {
 		return yargs;
 	},
-	handler: async (_) => {
+	handler: async (_): Promise<void> => {
 		const peerId = await generatePeerId();
 		console.log({
 			...peerId.toJSON(),

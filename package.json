@@ -29,7 +29,8 @@
 		"clean:all": "npm run clean && (rm -r ./node_modules || true)",
 		"lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
 		"test": "mocha",
-		"build": "npm run clean && npm run tsc"
+		"build": "npm run clean && npm run tsc",
+		"gen_doc": "cli-docs-generator --cli=./dist/index.js --pretty_cli_name=fldist -o USAGE.md"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.6",
@@ -42,10 +43,12 @@
 		"@typescript-eslint/parser": "^4.11.0",
 		"babel-preset-env": "1.7.0",
 		"chai": "^4.1.2",
+		"cli-docs-generator": "^1.0.3",
 		"coveralls": "^3.0.3",
 		"eslint": "^7.16.0",
 		"eslint-config-airbnb-base": "^14.2.1",
 		"eslint-config-prettier": "^7.1.0",
+		"eslint-import-resolver-typescript": "^2.4.0",
 		"eslint-plugin-import": "^2.22.1",
 		"eslint-plugin-prettier": "^3.3.0",
 		"mocha": "^8.1.3",

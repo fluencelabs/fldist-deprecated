@@ -1,5 +1,4 @@
 import log from 'loglevel';
-import promiseRetry from 'promise-retry';
 import { promises as fs } from 'fs';
 import {
 	addBlueprint,
@@ -17,7 +16,7 @@ import {
 import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
-import { Context } from './args';
+import { Context } from './types';
 
 export type Module = {
 	base64: string;
@@ -28,29 +27,6 @@ export async function loadModule(path: string): Promise<string> {
 	const data = await fs.readFile(path);
 	return data.toString('base64');
 }
-
-export async function getModule(path: string, name?: string, configPath?: string): Promise<Module> {
-	let config;
-	if (configPath) {
-		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
-	} else if (name) {
-		config = createConfig({ name });
-	} else {
-		throw new Error(`either --config or --name must be specified`);
-	}
-	return { base64: await loadModule(path), config: config };
-}
-
-export async function getFileContent(path: string): Promise<string> {
-	const data = await fs.readFile(path);
-	return data.toString();
-}
-
-type Blueprint = {
-	id?: string;
-	name: string;
-	dependencies: string[];
-};
 
 type ConfigArgs = {
 	name: string;
@@ -71,6 +47,29 @@ export function createConfig(args: ConfigArgs): ModuleConfig {
 		},
 	};
 }
+
+export async function getFileContent(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString();
+}
+
+export async function getModule(path: string, name?: string, configPath?: string): Promise<Module> {
+	let config;
+	if (configPath) {
+		config = createConfig(JSON.parse(await getFileContent(configPath)) as ConfigArgs);
+	} else if (name) {
+		config = createConfig({ name });
+	} else {
+		throw new Error(`either --config or --name must be specified`);
+	}
+	return { base64: await loadModule(path), config: config };
+}
+
+type Blueprint = {
+	id?: string;
+	name: string;
+	dependencies: string[];
+};
 
 export class Distributor {
 	blueprints: Blueprint[];
@@ -93,10 +92,10 @@ export class Distributor {
 			seed = peerIdToSeed(peerId);
 		}
 
-		if (!context.quiet) {
-			console.log('client seed: ' + seed);
-			console.log('client peerId: ' + peerId.toB58String());
-			console.log('relay peerId: ' + context.relay.peerId);
+		if (context.verbose) {
+			console.log(`client seed: ${seed}`);
+			console.log(`client peerId: ${peerId.toB58String()}`);
+			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
 		const client = await createClient(context.relay, context.seed);
@@ -147,47 +146,6 @@ export class Distributor {
 		await this.client.disconnect();
 	}
 
-	async load_modules() {
-		this.modules = [
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/curl.wasm'),
-				config: createConfig({
-					name: 'curl_adapter',
-					mountedBinaries: { curl: '/usr/bin/curl' },
-					preopenedFiles: ['/tmp'],
-				}),
-			},
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/local_storage.wasm'),
-				config: createConfig({
-					name: 'local_storage',
-					preopenedFiles: ['/tmp'],
-					mappedDirs: { sites: '/tmp' },
-				}),
-			},
-			{
-				base64: await loadModule('./src/artifacts/url-downloader/facade.wasm'),
-				config: createConfig({ name: 'facade_url_downloader' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/sqlite3.wasm'),
-				config: createConfig({ name: 'sqlite3' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/user-list.wasm'),
-				config: createConfig({ name: 'userlist' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/history.wasm'),
-				config: createConfig({ name: 'history' }),
-			},
-			{
-				base64: await loadModule('./src/artifacts/redis.wasm'),
-				config: createConfig({ name: 'redis' }),
-			},
-		];
-	}
-
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
 		const [req, promise] = new RequestFlowBuilder()
 			.withRawScript(
@@ -216,11 +174,11 @@ export class Distributor {
 	async uploadBlueprint(node: string, bp: Blueprint): Promise<string> {
 		log.warn(`uploading blueprint ${bp.name} to node ${node} via client ${this.client.selfPeerId}`);
 
-		return await addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
+		return addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
 	}
 
 	async createService(node: string, bpId: string): Promise<string> {
-		return await fluenceCreateService(this.client, bpId, node, this.ttl);
+		return fluenceCreateService(this.client, bpId, node, this.ttl);
 	}
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
@@ -241,25 +199,24 @@ export class Distributor {
 			)
 			.withVariable('node', node)
 			.withVariables({ alias, serviceId })
-			.buildAsFetch('callback', 'callback');
+			.buildAsFetch<void>('callback', 'callback');
 
 		await this.client.initiateFlow(request);
-		await promise;
-		return;
+		return promise;
 	}
 
-	async getModules(node: string): Promise<string[]> {
-		return await getMod(this.client, this.ttl);
+	async getModules(_node: string): Promise<string[]> {
+		return getMod(this.client, this.ttl);
 	}
 
-	async getInterfaces(node: string): Promise<string[]> {
+	async getInterfaces(_node: string): Promise<string[]> {
 		console.log(this.ttl);
-		return await getInter(this.client, this.ttl);
+		return getInter(this.client, this.ttl);
 	}
 
 	async getInterface(serviceId: string, node: string): Promise<string[]> {
-		let callbackFn = 'getInterface';
-		let script = `
+		const callbackFn = 'getInterface';
+		const script = `
             (seq
 				(call init_relay ("op" "identity") [])
 				(seq 
@@ -271,12 +228,12 @@ export class Distributor {
 				)
             )
         `;
-		let data = {
+		const data = {
 			node: node,
 			myPeerId: this.client.selfPeerId,
 			serviceId: serviceId,
 		};
-		let particle = new Particle(script, data, this.ttl);
+		const particle = new Particle(script, data, this.ttl);
 
 		const [res] = await sendParticleAsFetch<[string[]]>(this.client, particle, callbackFn);
 		return res;
@@ -286,25 +243,25 @@ export class Distributor {
 		air: string,
 		callback: (args, tetraplets) => void,
 		data?: Map<string, any> | Record<string, any>,
+		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
-		data = data || new Map();
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
 				.withRawScript(air)
 				.withVariable('relay', this.client.relayPeerId)
 				.withVariable('returnService', 'returnService')
+				.withVariables(data || new Map())
 				.configHandler((h) => {
 					h.onEvent('returnService', 'run', (args, tetraplets) => {
 						callback(args, tetraplets);
-						resolve();
+						if (!multipleResults) {
+							resolve();
+						}
 					});
 				})
-				.handleScriptError(reject);
-
-			if (data) {
-				b.withVariables(data);
-			}
+				.handleScriptError(reject)
+				.handleTimeout(multipleResults ? resolve : reject);
 
 			request = b.build();
 		});
@@ -365,83 +322,5 @@ export class Distributor {
 
 		await this.client.initiateFlow(request);
 		await promise;
-	}
-
-	async uploadAllModules(node: string) {
-		for await (const module of this.modules) {
-			await this.uploadModuleToNode(node, module);
-		}
-	}
-
-	async uploadAllModulesToAllNodes() {
-		for await (const node of this.nodes) {
-			await this.uploadAllModules(node.peerId);
-		}
-	}
-
-	async uploadAllBlueprints(node: Node) {
-		for await (const bp of this.blueprints) {
-			await this.uploadBlueprint(node.peerId, bp);
-		}
-	}
-
-	async uploadAllBlueprintsToAllNodes() {
-		for await (const node of this.nodes) {
-			await this.uploadAllBlueprints(node);
-		}
-	}
-
-	async distributeServices(relay: Node, distribution: Map<string, number[]>) {
-		// Cache information about uploaded modules & blueprints to avoid uploading them several times
-		const uploadedModules = new Set<[Node, string]>();
-		const uploadedBlueprints = new Set<[Node, string]>();
-
-		async function uploadM(d: Distributor, node: Node, module: Module) {
-			const already = uploadedModules.has([node, module.config.name]);
-			if (!already) {
-				await promiseRetry({ retries: 3 }, () => d.uploadModuleToNode(node.peerId, module));
-			}
-			uploadedModules.add([node, module.config.name]);
-		}
-
-		async function uploadB(d: Distributor, node: Node, bp: Blueprint): Promise<Blueprint> {
-			const already = uploadedBlueprints.has([node, bp.name]);
-			if (!already) {
-				const blueprint = await promiseRetry({ retries: 3 }, () => d.uploadBlueprint(node.peerId, bp));
-				uploadedBlueprints.add([node, bp.name]);
-				return { ...bp, id: blueprint };
-			}
-
-			return bp;
-		}
-
-		for await (const [name, nodes] of distribution.entries()) {
-			const blueprint = this.blueprints.find((bp) => bp.name === name);
-			if (!blueprint) {
-				throw new Error(`can't find blueprint ${name}`);
-			}
-
-			const modules: [string, Module | undefined][] = blueprint.dependencies.map((moduleName) => [
-				moduleName,
-				this.modules.find((m) => m.config.name === moduleName),
-			]);
-
-			for await (const idx of nodes) {
-				const node = this.nodes[idx];
-				for await (const [nameM, module] of modules) {
-					if (module) {
-						await uploadM(this, node, module);
-					} else {
-						throw new Error(`can't find dependency ${nameM} for bluprint ${blueprint.name}`);
-					}
-				}
-				const bp = await uploadB(this, node, blueprint);
-				if (!bp.id) {
-					throw new Error(`Blurptin should be with id to create a service`);
-				}
-				let serviceId = await this.createService(node.peerId, bp.id);
-				log.warn(`service created ${serviceId} as instance of ${bp.name}@${bp.id}`);
-			}
-		}
 	}
 }

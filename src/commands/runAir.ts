@@ -1,6 +1,4 @@
 import { promises as fs } from 'fs';
-import log from 'loglevel';
-import { Context } from '../args';
 import { Distributor } from '../distributor';
 
 export default {
@@ -36,36 +34,36 @@ export default {
 				type: 'boolean',
 				describe: 'If passed, print tetraplets',
 			})
-			.coerce('data', function (arg) {
+			.coerce('data', (arg) => {
 				const dataJson = JSON.parse(arg);
 				return new Map(Object.entries(dataJson));
 			});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
 		const distributor: Distributor = await argv.getDistributor();
 
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');
 
 		const callback = (args, tetraplets) => {
-			if (argv.tetraplets === true) {
-				let result = {
-					result: args,
-					tetraplets: tetraplets
-				};
-				console.log(JSON.stringify(result, undefined, 2));
+			const strResult = JSON.stringify(args, undefined, 2);
+			if (argv.tetraplets) {
+				console.log('===================');
+				console.log(strResult);
+				console.log('===================');
+				console.log(tetraplets);
+				console.log('===================');
 			} else {
-				console.log(JSON.stringify(args, undefined, 2));
+				console.log(strResult);
 			}
 			return {};
 		};
 
-		const [particleId, promise] = await distributor.runAir(air, callback, argv.data);
-		log.warn(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
-		await promise;
-		if (argv.wait === false) {
-			process.exit(0);
+		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, argv.wait);
+		if (argv.wait) {
+			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}
+		await promise;
+		process.exit(0);
 	},
 };

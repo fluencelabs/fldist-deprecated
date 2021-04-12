@@ -2,6 +2,8 @@ import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
 import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
 import { testNet, dev, Node } from '@fluencelabs/fluence-network-environment';
+import { hideBin } from 'yargs/helpers';
+
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
 import getModules from './commands/getModules';
@@ -11,23 +13,23 @@ import createService from './commands/createService';
 import newService from './commands/newService';
 import createKeyPair from './commands/createKeyPair';
 import runAir from './commands/runAir';
-import env from './commands/env';
+import envCommand from './commands/env';
 import getInterface from './commands/getInterface';
-import { DEFAULT_NODE_IDX } from './';
 import { Distributor } from './distributor';
+import { Context, Env } from './types';
 
-const { hideBin } = require('yargs/helpers');
+export const DEFAULT_NODE_IDX = 3;
 
 function isString(x: any): x is string {
 	return typeof x === 'string';
 }
 
 function defined<T>(x: T | undefined): x is T {
-	return typeof x != 'undefined';
+	return typeof x !== 'undefined';
 }
 
-function maybeString(argv: Arguments<{}>, key: string): string | undefined {
-	let value = argv[key];
+function maybeString(argv: Arguments<Record<string, unknown>>, key: string): string | undefined {
+	const value = argv[key];
 	if (isString(value)) {
 		return value;
 	}
@@ -44,17 +46,6 @@ const local = [
 		peerId: '12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3',
 	},
 ];
-
-type Env = 'dev' | 'testnet' | 'local';
-
-export interface Context {
-	nodes: Node[];
-	relay: Node;
-	env: Env;
-	ttl: number;
-	seed: string;
-	quiet: boolean;
-}
 
 export function args() {
 	return yargs(hideBin(process.argv))
@@ -75,11 +66,11 @@ export function args() {
 			argv.seed = peerIdToSeed(peerId);
 		})
 		.middleware((argv) => {
-			let logLevel = argv.log as LogLevelDesc;
+			const logLevel = argv.log as LogLevelDesc;
 			log.setLevel(logLevel);
 			setLogLevel(logLevel);
 
-			let env = argv.env as Env;
+			const env = argv.env as Env;
 			let nodes;
 			switch (env) {
 				case 'local':
@@ -96,53 +87,52 @@ export function args() {
 					process.exit(1);
 			}
 
-			let node: Node | undefined = undefined;
-			let node_id = maybeString(argv, 'node-id');
-			let node_addr = maybeString(argv, 'node-addr');
-			if (defined(node_addr)) {
-				let splitted = node_addr.split('/');
-				let last = splitted[splitted.length - 1];
+			let node: Node | undefined;
+			let nodeId = maybeString(argv, 'node-id');
+			let nodeAddr = maybeString(argv, 'node-addr');
+			if (defined(nodeAddr)) {
+				const splitted = nodeAddr.split('/');
+				const last = splitted[splitted.length - 1];
 				// account for the leading slash
-				let penult = splitted[splitted.length - 2];
+				const penult = splitted[splitted.length - 2];
 				// if node_addr doesn't contain /p2p/<peerId>, then set it from --node-id
 				if (!last.startsWith('12D3') && !penult.startsWith('12D3')) {
-					if (defined(node_id)) {
+					if (defined(nodeId)) {
 						// add node_id to multiaddr if there is no peer_id in multiaddr
 						splitted.push('p2p');
-						splitted.push(node_id);
-						node_addr = splitted.join('/');
+						splitted.push(nodeId);
+						nodeAddr = splitted.join('/');
 					} else {
 						console.error(`Error:\n Missing --node-id`);
 						process.exit(1);
 					}
 				} else {
 					// if node_addr contains peer id, ignore --node-id
-					node_id = last.startsWith('12D3') ? last : penult;
+					nodeId = last.startsWith('12D3') ? last : penult;
 				}
 				node = {
-					peerId: node_id,
-					multiaddr: node_addr,
+					peerId: nodeId,
+					multiaddr: nodeAddr,
 				};
-			} else if (defined(node_id)) {
-				node = nodes.find((n) => n.peerId === node_id);
+			} else if (defined(nodeId)) {
+				node = nodes.find((n) => n.peerId === nodeId);
 				if (!defined(node)) {
-					let environment = nodes.map((n) => n.peerId).join('\n\t');
+					const environment = nodes.map((n) => n.peerId).join('\n\t');
 					console.error(
-						`Error:\n'--node ${node_id}' doesn't belong to selected environment (${env}):\n\t${environment}`,
+						`Error:\n'--node ${nodeId}' doesn't belong to selected environment (${env}):\n\t${environment}`,
 					);
 					process.exit(1);
 				}
 			}
 
-			let ttl = argv.ttl as number;
-			let quiet = argv.quiet as boolean;
+			const ttl = argv.ttl as number;
 			const context: Context = {
 				nodes: nodes,
 				relay: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
 				seed: argv.seed as string,
 				env: env,
 				ttl: ttl,
-				quiet: quiet,
+				verbose: argv.verbose as boolean,
 			};
 			argv.context = context;
 		})
@@ -153,6 +143,13 @@ export function args() {
 				}
 				return argv.distributor;
 			};
+		})
+		.option('v', {
+			alias: 'verbose',
+			demandOption: false,
+			describe: 'Display verbose information such as created client seed + peer Id and relay peer id',
+			type: 'boolean',
+			default: false,
 		})
 		.option('s', {
 			alias: 'seed',
@@ -187,13 +184,6 @@ export function args() {
 			type: 'number',
 			default: 60000,
 		})
-		.option('q', {
-			alias: 'quiet',
-			demandOption: false,
-			describe: 'if passed, do not print peer id and seed info',
-			type: 'boolean',
-			default: false,
-		})
 		.command(upload)
 		.command(getModules)
 		.command(getInterfaces)
@@ -204,14 +194,14 @@ export function args() {
 		.command(deployApp)
 		.command(createKeyPair)
 		.command(runAir)
-		.command(env)
+		.command(envCommand)
 		.command({
 			command: '*',
-			handler() {
+			handler: () => {
 				yargs.showHelp();
 			},
 		})
-		.fail(function (msg, err) {
+		.fail((msg, err) => {
 			console.error('Something went wrong!');
 			if (msg) console.error(msg);
 			console.error(err);

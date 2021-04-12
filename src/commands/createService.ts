@@ -1,4 +1,4 @@
-import { Context } from '../args';
+import { Context } from '../types';
 import { Distributor } from '../distributor';
 
 export default {
@@ -12,8 +12,8 @@ export default {
 			type: 'string',
 		});
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
+		const context = argv.context as Context;
 		const distributor: Distributor = await argv.getDistributor();
 		const serviceId = await distributor.createService(context.relay.peerId, argv.id);
 		console.log(`service id: ${serviceId}`);

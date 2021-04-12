@@ -1,5 +1,5 @@
 import log from 'loglevel';
-import { Context } from '../args';
+import { Context } from '../types';
 import { Distributor, getModule } from '../distributor';
 
 export default {
@@ -33,8 +33,8 @@ type ConfigArgs = {
 			})
 			.conflicts('config', 'name');
 	},
-	handler: async (argv) => {
-		const context: Context = argv.context;
+	handler: async (argv): Promise<void> => {
+		const context = argv.context as Context;
 		const distributor: Distributor = await argv.getDistributor();
 
 		const module = await getModule(argv.path, argv.name, argv.configPath);
