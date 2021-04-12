@@ -59,7 +59,7 @@ export default {
 			return {};
 		};
 
-		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, !argv.wait);
+		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, argv.wait);
 		if (argv.wait) {
 			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}
