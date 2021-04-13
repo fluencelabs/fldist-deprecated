@@ -59,11 +59,15 @@ export default {
 			return {};
 		};
 
-		const [particleId, promise] = await distributor.runAir(air, callback, argv.data, argv.wait);
-		if (argv.wait) {
+		const [particleId, particle_timeout] = await distributor.runAir(air, callback, argv.data, argv.wait);
+		if (argv.wait && argv.verbose) {
 			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}
-		await promise;
+		// Wait for timeout and exit
+		await particle_timeout;
+		if (argv.verbose) {
+			console.warn("Particle timed out, exiting");
+		}
 		process.exit(0);
 	},
 };
