@@ -153,7 +153,7 @@ export class Distributor {
 	(seq
 		(call init_relay ("op" "identity") [])
 		(seq
-			(call init_relay ("dist" "add_module") [module_bytes module_config] result)
+			(call node ("dist" "add_module") [module_bytes module_config] result)
 			(seq 
 				(call init_relay ("op" "identity") [])
         		(call %init_peer_id% ("callback" "callback") [result])
@@ -163,6 +163,7 @@ export class Distributor {
 			)
 			.withVariable('module_bytes', module.base64)
 			.withVariable('module_config', module.config)
+			.withVariable('node', node)
 			.withTTL(this.ttl)
 			.buildAsFetch<[string]>('callback', 'callback');
 

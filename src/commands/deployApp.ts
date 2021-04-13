@@ -117,6 +117,7 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 
 	for (const [key, service] of Object.entries<any>(value.services)) {
 		console.log('Loading dependencies for service: ', key);
+		service.hashDependencies = [];
 		for (const depName of service.dependencies) {
 			const module = value.modules[depName];
 			if (!module) {
@@ -139,16 +140,19 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 				config,
 			});
 			module.hash = hash;
+			service.hashDependencies.push(`hash:${hash}`);
 		}
 
 		console.log('Creating blueprint for service: ', key);
+		console.log('dependencies: ', service.dependencies);
+		console.log('hashDependencies: ', service.hashDependencies);
 		const bpId = await distributor.uploadBlueprint(service.node, {
 			name: key,
-			dependencies: service.dependencies,
+			dependencies: service.hashDependencies,
 		});
 		service.blueprint_id = bpId;
 
-		console.log('Creating service: ', key);
+		console.log('Creating service for blueprint %s %s on node %s', key, bpId, service.node);
 		const serviceId = await distributor.createService(service.node, bpId);
 		service.id = serviceId;
 	}
