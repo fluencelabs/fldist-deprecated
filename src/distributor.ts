@@ -148,6 +148,7 @@ export class Distributor {
 
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
 		const [req, promise] = new RequestFlowBuilder()
+			.withDefaults()
 			.withRawScript(
 				`
 	(seq
@@ -184,6 +185,7 @@ export class Distributor {
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
+			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -277,6 +279,7 @@ export class Distributor {
 		const intervalToUse = interval || 3;
 
 		const [request, promise] = new RequestFlowBuilder()
+			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -304,6 +307,7 @@ export class Distributor {
 
 	async removeScript(node: string, scriptId: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
+			.withDefaults()
 			.withRawScript(
 				`
         (seq
