@@ -249,6 +249,7 @@ export class Distributor {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
+				.withDefaults()
 				.withTTL(this.ttl)
 				.withRawScript(air)
 				.withVariable('relay', this.client.relayPeerId)
