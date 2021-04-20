@@ -35,8 +35,7 @@ export default {
 				describe: 'If passed, print tetraplets',
 			})
 			.coerce('data', (arg) => {
-				const dataJson = JSON.parse(arg);
-				return new Map(Object.entries(dataJson));
+				return JSON.parse(arg);
 			});
 	},
 	handler: async (argv): Promise<void> => {
@@ -59,14 +58,14 @@ export default {
 			return {};
 		};
 
-		const [particleId, particle_timeout] = await distributor.runAir(air, callback, argv.data, argv.wait);
+		const [particleId, particleTimeout] = await distributor.runAir(air, callback, argv.data, argv.wait);
 		if (argv.wait && argv.verbose) {
 			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}
 		// Wait for timeout and exit
-		await particle_timeout;
+		await particleTimeout;
 		if (argv.verbose) {
-			console.warn("Particle timed out, exiting");
+			console.warn('Particle timed out, exiting');
 		}
 		process.exit(0);
 	},

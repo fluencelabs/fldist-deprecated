@@ -16,6 +16,7 @@ import {
 import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
+import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
 import { Context } from './types';
 
 export type Module = {
@@ -245,24 +246,48 @@ export class Distributor {
 	async runAir(
 		air: string,
 		callback: (args, tetraplets) => void,
-		data?: Map<string, any> | Record<string, any>,
+		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
-				.withDefaults()
 				.withTTL(this.ttl)
 				.withRawScript(air)
-				.withVariable('relay', this.client.relayPeerId)
-				.withVariable('returnService', 'returnService')
-				.withVariables(data || new Map())
-				.configHandler((h) => {
+				.configHandler((h, r) => {
+					// eslint-disable-next-line @typescript-eslint/ban-types
+					h.use((req, resp, next: Function) => {
+						if (req.serviceId === 'getDataSrv') {
+							if (req.fnName === 'relay') {
+								resp.result = this.client.relayPeerId!;
+								resp.retCode = ResultCodes.success;
+							}
+
+							const valueFromData = data[req.fnName];
+							if (valueFromData !== undefined) {
+								resp.result = valueFromData;
+								resp.retCode = ResultCodes.success;
+							}
+						}
+						next();
+					});
+
 					h.onEvent('returnService', 'run', (args, tetraplets) => {
 						callback(args, tetraplets);
 						if (!multipleResults) {
 							resolve();
 						}
+					});
+
+					h.onEvent('errorHandlingSrv', 'error', (args) => {
+						let msg;
+						try {
+							msg = JSON.parse(args[0]);
+						} catch (e) {
+							msg = e;
+						}
+
+						r.raiseError(msg);
 					});
 				})
 				.handleScriptError(reject)
