@@ -267,19 +267,24 @@ export class Distributor {
 				.configHandler((h, r) => {
 					// eslint-disable-next-line @typescript-eslint/ban-types
 					h.use((req, resp, next: Function) => {
-						if (req.serviceId === 'getDataSrv') {
-							if (req.fnName === 'relay') {
-								resp.result = this.client.relayPeerId!;
-								resp.retCode = ResultCodes.success;
-							}
-
-							const valueFromData = data[req.fnName];
-							if (valueFromData !== undefined) {
-								resp.result = valueFromData;
-								resp.retCode = ResultCodes.success;
-							}
+						if (req.serviceId !== 'getDataSrv') {
+							next();
+							return;
 						}
-						next();
+
+						resp.result = `Couldn't load variable "${req.fnName}"`;
+						resp.retCode = 100;
+
+						if (req.fnName === 'relay') {
+							resp.result = this.client.relayPeerId!;
+							resp.retCode = ResultCodes.success;
+						}
+
+						const valueFromData = data[req.fnName];
+						if (valueFromData !== undefined) {
+							resp.result = valueFromData;
+							resp.retCode = ResultCodes.success;
+						}
 					});
 
 					h.onEvent('returnService', 'run', (args, tetraplets) => {
