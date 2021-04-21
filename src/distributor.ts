@@ -16,6 +16,7 @@ import {
 import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
+import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
 import { Context } from './types';
 
 export type Module = {
@@ -148,7 +149,6 @@ export class Distributor {
 
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
 		const [req, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
 	(seq
@@ -185,7 +185,6 @@ export class Distributor {
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -242,16 +241,89 @@ export class Distributor {
 		return res;
 	}
 
-	async runAir(
+	async doRunAir(
+		isNonAquaFormat: boolean,
 		air: string,
 		callback: (args, tetraplets) => void,
-		data?: Map<string, any> | Record<string, any>,
+		data: Record<string, any> = {},
+		multipleResults = false,
+	): Promise<[string, Promise<void>]> {
+		const fn = isNonAquaFormat ? this.runAir.bind(this) : this.runAirAqua.bind(this);
+		return fn(air, callback, data, multipleResults);
+	}
+
+	async runAirAqua(
+		air: string,
+		callback: (args, tetraplets) => void,
+		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
-				.withDefaults()
+				.disableInjections()
+				.withTTL(this.ttl)
+				.withRawScript(air)
+				.configHandler((h, r) => {
+					// eslint-disable-next-line @typescript-eslint/ban-types
+					h.use((req, resp, next: Function) => {
+						if (req.serviceId !== 'getDataSrv') {
+							next();
+							return;
+						}
+
+						resp.result = `Couldn't load variable "${req.fnName}"`;
+						resp.retCode = 100;
+
+						if (req.fnName === 'relay') {
+							resp.result = this.client.relayPeerId!;
+							resp.retCode = ResultCodes.success;
+						}
+
+						const valueFromData = data[req.fnName];
+						if (valueFromData !== undefined) {
+							resp.result = valueFromData;
+							resp.retCode = ResultCodes.success;
+						}
+					});
+
+					h.onEvent('returnService', 'run', (args, tetraplets) => {
+						callback(args, tetraplets);
+						if (!multipleResults) {
+							resolve();
+						}
+					});
+
+					h.onEvent('errorHandlingSrv', 'error', (args) => {
+						let msg;
+						try {
+							msg = JSON.parse(args[0]);
+						} catch (e) {
+							msg = e;
+						}
+
+						r.raiseError(msg);
+					});
+				})
+				.handleScriptError(reject)
+				.handleTimeout(multipleResults ? resolve : reject);
+
+			request = b.build();
+		});
+
+		await this.client.initiateFlow(request);
+		return [request.id, operationPromise];
+	}
+
+	async runAir(
+		air: string,
+		callback: (args, tetraplets) => void,
+		data: Record<string, any> = {},
+		multipleResults = false,
+	): Promise<[string, Promise<void>]> {
+		let request;
+		const operationPromise = new Promise<void>((resolve, reject) => {
+			const b = new RequestFlowBuilder()
 				.withTTL(this.ttl)
 				.withRawScript(air)
 				.withVariable('relay', this.client.relayPeerId)
@@ -279,7 +351,6 @@ export class Distributor {
 		const intervalToUse = interval || 3;
 
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -307,7 +378,6 @@ export class Distributor {
 
 	async removeScript(node: string, scriptId: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq
