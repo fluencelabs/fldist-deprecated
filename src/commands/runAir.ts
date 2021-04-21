@@ -58,7 +58,8 @@ export default {
 			return {};
 		};
 
-		const [particleId, particleTimeout] = await distributor.runAir(air, callback, argv.data, argv.wait);
+		const fn = argv.aqua ? distributor.runAirAqua : distributor.runAir;
+		const [particleId, particleTimeout] = await fn(air, callback, argv.data, argv.wait);
 		if (argv.wait && argv.verbose) {
 			console.log(`Particle id: ${particleId}. Waiting for results... Press Ctrl+C to stop the script.`);
 		}

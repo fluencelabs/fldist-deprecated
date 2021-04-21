@@ -243,7 +243,7 @@ export class Distributor {
 		return res;
 	}
 
-	async runAir(
+	async runAirAqua(
 		air: string,
 		callback: (args, tetraplets) => void,
 		data: Record<string, any> = {},
@@ -288,6 +288,39 @@ export class Distributor {
 						}
 
 						r.raiseError(msg);
+					});
+				})
+				.handleScriptError(reject)
+				.handleTimeout(multipleResults ? resolve : reject);
+
+			request = b.build();
+		});
+
+		await this.client.initiateFlow(request);
+		return [request.id, operationPromise];
+	}
+
+	async runAir(
+		air: string,
+		callback: (args, tetraplets) => void,
+		data: Record<string, any> = {},
+		multipleResults = false,
+	): Promise<[string, Promise<void>]> {
+		let request;
+		const operationPromise = new Promise<void>((resolve, reject) => {
+			const b = new RequestFlowBuilder()
+				.withDefaults()
+				.withTTL(this.ttl)
+				.withRawScript(air)
+				.withVariable('relay', this.client.relayPeerId)
+				.withVariable('returnService', 'returnService')
+				.withVariables(data || new Map())
+				.configHandler((h) => {
+					h.onEvent('returnService', 'run', (args, tetraplets) => {
+						callback(args, tetraplets);
+						if (!multipleResults) {
+							resolve();
+						}
 					});
 				})
 				.handleScriptError(reject)
