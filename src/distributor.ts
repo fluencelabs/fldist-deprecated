@@ -149,7 +149,6 @@ export class Distributor {
 
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
 		const [req, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
 	(seq
@@ -186,7 +185,6 @@ export class Distributor {
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -252,6 +250,7 @@ export class Distributor {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
+				.disableInjections()
 				.withTTL(this.ttl)
 				.withRawScript(air)
 				.configHandler((h, r) => {
@@ -309,7 +308,6 @@ export class Distributor {
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
-				.withDefaults()
 				.withTTL(this.ttl)
 				.withRawScript(air)
 				.withVariable('relay', this.client.relayPeerId)
@@ -337,7 +335,6 @@ export class Distributor {
 		const intervalToUse = interval || 3;
 
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq
@@ -365,7 +362,6 @@ export class Distributor {
 
 	async removeScript(node: string, scriptId: string): Promise<void> {
 		const [request, promise] = new RequestFlowBuilder()
-			.withDefaults()
 			.withRawScript(
 				`
         (seq

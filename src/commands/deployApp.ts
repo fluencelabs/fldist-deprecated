@@ -102,7 +102,13 @@ const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): 
 	});
 };
 
-const deployApp = async (distributor: Distributor, context: Context, input: string, output: string): Promise<void> => {
+const deployApp = async (
+	distributor: Distributor,
+	context: Context,
+	input: string,
+	output: string,
+	isAquaFormat: boolean,
+): Promise<void> => {
 	const root = path.dirname(input);
 
 	const inputRaw = await fs.readFile(input, 'utf-8');
@@ -177,7 +183,9 @@ const deployApp = async (distributor: Distributor, context: Context, input: stri
 			node: script.node,
 		};
 
-		const [_particle, promise] = await distributor.runAir(
+		const fn = isAquaFormat ? distributor.runAirAqua : distributor.runAir;
+
+		const [_particle, promise] = await fn(
 			scriptText,
 			(args) => {
 				const [scriptExecResult] = args;
@@ -226,7 +234,7 @@ export default {
 	handler: async (argv: any): Promise<void> => {
 		const input: string = argv.i;
 		const output: string = argv.o;
-		await deployApp(await argv.getDistributor(), argv.context, input, output);
+		await deployApp(await argv.getDistributor(), argv.context, input, output, argv.aqua);
 		process.exit(0);
 	},
 };
