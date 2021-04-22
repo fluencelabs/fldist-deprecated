@@ -300,10 +300,8 @@ export class Distributor {
 						let msg;
 						try {
 							msg = JSON.parse(args[0]);
-							console.error("Received error: " + msg)
 						} catch (e) {
 							msg = "Couldn't parse received error: " + JSON.stringify(e);
-							console.error(msg)
 						}
 
 						r.raiseError(msg);
