@@ -242,13 +242,13 @@ export class Distributor {
 	}
 
 	async doRunAir(
-		isNonAquaFormat: boolean,
+		isAquaFormat: boolean,
 		air: string,
 		callback: (args, tetraplets) => void,
 		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
-		const fn = isNonAquaFormat ? this.runAir.bind(this) : this.runAirAqua.bind(this);
+		const fn = isAquaFormat ? this.runAirAqua.bind(this) : this.runAir.bind(this);
 		return fn(air, callback, data, multipleResults);
 	}
 

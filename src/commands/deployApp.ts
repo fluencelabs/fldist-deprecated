@@ -107,7 +107,7 @@ const deployApp = async (
 	context: Context,
 	input: string,
 	output: string,
-	isNonAquaFormat: boolean,
+	isAquaFormat: boolean,
 ): Promise<void> => {
 	const root = path.dirname(input);
 
@@ -184,7 +184,7 @@ const deployApp = async (
 		};
 
 		const [_particle, promise] = await distributor.doRunAir(
-			isNonAquaFormat,
+			isAquaFormat,
 			scriptText,
 			(args) => {
 				const [scriptExecResult] = args;
@@ -233,7 +233,7 @@ export default {
 	handler: async (argv: any): Promise<void> => {
 		const input: string = argv.i;
 		const output: string = argv.o;
-		await deployApp(await argv.getDistributor(), argv.context, input, output, argv.nonAqua);
+		await deployApp(await argv.getDistributor(), argv.context, input, output, argv.aqua);
 		process.exit(0);
 	},
 };

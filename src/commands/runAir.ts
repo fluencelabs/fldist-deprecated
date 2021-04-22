@@ -59,7 +59,7 @@ export default {
 		};
 
 		const [particleId, particleTimeout] = await distributor.doRunAir(
-			argv.nonAqua,
+			argv.aqua,
 			air,
 			callback,
 			argv.data,
