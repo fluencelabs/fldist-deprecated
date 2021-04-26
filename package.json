@@ -59,7 +59,7 @@
 	},
 	"dependencies": {
 		"@fluencelabs/fluence": "0.9.43",
-		"@fluencelabs/fluence-network-environment": "1.0.8",
+		"@fluencelabs/fluence-network-environment": "1.0.9",
 		"handlebars": "^4.7.7",
 		"joi": "^17.4.0",
 		"loglevel": "^1.7.1",

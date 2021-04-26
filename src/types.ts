@@ -1,6 +1,6 @@
 import { Node } from '@fluencelabs/fluence-network-environment';
 
-export type Env = 'dev' | 'testnet' | 'local';
+export type Env = 'dev' | 'testnet' | 'local' | 'stage' | 'krasnodar';
 
 export interface Context {
 	nodes: Node[];
