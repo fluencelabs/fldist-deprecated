@@ -18,6 +18,7 @@ import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
 import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
 import { Context } from './types';
+import { VersionIncompatibleError } from '@fluencelabs/fluence/dist/internal/FluenceConnection';
 
 export type Module = {
 	base64: string;
@@ -99,8 +100,19 @@ export class Distributor {
 			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
-		const client = await createClient(context.relay, context.seed);
-		return new Distributor(context.nodes, context.ttl, client);
+		try {
+			const client = await createClient(context.relay, context.seed);
+			return new Distributor(context.nodes, context.ttl, client);
+		} catch (e) {
+			console.log(typeof e);
+			if (e instanceof VersionIncompatibleError) {
+				throw new Error(
+					'Current version of fldist is incompatible with the connected Fluence node. Please update fldist',
+				);
+			} else {
+				throw e;
+			}
+		}
 	};
 
 	constructor(nodes: Node[], ttl: number, client: FluenceClient) {
