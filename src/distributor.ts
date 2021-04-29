@@ -17,8 +17,8 @@ import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
 import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
-import { Context } from './types';
 import { VersionIncompatibleError } from '@fluencelabs/fluence/dist/internal/FluenceConnection';
+import { Context } from './types';
 
 export type Module = {
 	base64: string;
@@ -253,6 +253,22 @@ export class Distributor {
 		return res;
 	}
 
+	monitor() {
+		this.client.aquaCallHandler.use((req, res, next) => {
+			console.log('received call with params: ', {
+				fnName: req.fnName,
+				serviceId: req.serviceId,
+				args: req.args,
+				particleId: req.particleContext.particleId,
+			});
+
+			res.retCode = 0;
+			res.result = {};
+
+			next();
+		});
+	}
+
 	async doRunAir(
 		isGeneratedByAqua: boolean,
 		air: string,
@@ -313,7 +329,7 @@ export class Distributor {
 						try {
 							msg = JSON.parse(args[0]);
 						} catch (e) {
-							msg = "Couldn't parse received error: " + JSON.stringify(e);
+							msg = `Couldn't parse received error: ${JSON.stringify(e)}`;
 						}
 
 						r.raiseError(msg);

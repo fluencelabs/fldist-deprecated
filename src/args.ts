@@ -17,6 +17,7 @@ import envCommand from './commands/env';
 import getInterface from './commands/getInterface';
 import { Distributor } from './distributor';
 import { Context, Env } from './types';
+import monitor from './commands/monitor';
 
 export const DEFAULT_NODE_IDX = 3;
 
@@ -194,6 +195,7 @@ export function args() {
 		.command(deployApp)
 		.command(createKeyPair)
 		.command(runAir)
+		.command(monitor)
 		.command(envCommand)
 		.command({
 			command: '*',
