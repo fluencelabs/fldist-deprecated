@@ -305,7 +305,7 @@ export class Distributor {
 						resp.result = `Couldn't load variable "${req.fnName}"`;
 						resp.retCode = ResultCodes.noServiceFound;
 
-						if (req.fnName === 'relay') {
+						if (req.fnName === '-relay-') {
 							resp.result = this.client.relayPeerId!;
 							resp.retCode = ResultCodes.success;
 						}
