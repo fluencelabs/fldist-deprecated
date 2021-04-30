@@ -1,7 +1,7 @@
 import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
 import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
-import { testNet, dev, Node } from '@fluencelabs/fluence-network-environment';
+import {testNet, dev, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
 
 import deployApp from './commands/deployApp';
@@ -83,6 +83,12 @@ export function args() {
 				case 'testnet':
 					nodes = testNet;
 					break;
+				case 'stage':
+					nodes = stage;
+					break;
+				case 'krasnodar':
+					nodes = krasnodar;
+					break;
 				default:
 					console.error('incorrect env', env);
 					process.exit(1);
@@ -161,8 +167,8 @@ export function args() {
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',
-			choices: ['dev', 'testnet', 'local'],
-			default: 'testnet',
+			choices: ['krasnodar', 'local', 'testnet', 'stage', 'dev'],
+			default: 'krasnodar',
 		})
 		.option('node-id', {
 			alias: 'node',
