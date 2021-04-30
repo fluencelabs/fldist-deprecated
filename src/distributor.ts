@@ -17,6 +17,7 @@ import { Node } from '@fluencelabs/fluence-network-environment';
 import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
 import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
+import { VersionIncompatibleError } from '@fluencelabs/fluence/dist/internal/FluenceConnection';
 import { Context } from './types';
 
 export type Module = {
@@ -99,8 +100,19 @@ export class Distributor {
 			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
-		const client = await createClient(context.relay, context.seed);
-		return new Distributor(context.nodes, context.ttl, client);
+		try {
+			const client = await createClient(context.relay, context.seed);
+			return new Distributor(context.nodes, context.ttl, client);
+		} catch (e) {
+			console.log(typeof e);
+			if (e instanceof VersionIncompatibleError) {
+				throw new Error(
+					'Current version of fldist is incompatible with the connected Fluence node. Please update fldist',
+				);
+			} else {
+				throw e;
+			}
+		}
 	};
 
 	constructor(nodes: Node[], ttl: number, client: FluenceClient) {
@@ -241,6 +253,22 @@ export class Distributor {
 		return res;
 	}
 
+	monitor() {
+		this.client.aquaCallHandler.use((req, res, next) => {
+			console.log('received call with params: ', {
+				fnName: req.fnName,
+				serviceId: req.serviceId,
+				args: req.args,
+				particleId: req.particleContext.particleId,
+			});
+
+			res.retCode = 0;
+			res.result = {};
+
+			next();
+		});
+	}
+
 	async doRunAir(
 		isGeneratedByAqua: boolean,
 		air: string,
@@ -277,7 +305,7 @@ export class Distributor {
 						resp.result = `Couldn't load variable "${req.fnName}"`;
 						resp.retCode = ResultCodes.noServiceFound;
 
-						if (req.fnName === 'relay') {
+						if (req.fnName === '-relay-') {
 							resp.result = this.client.relayPeerId!;
 							resp.retCode = ResultCodes.success;
 						}
@@ -301,7 +329,7 @@ export class Distributor {
 						try {
 							msg = JSON.parse(args[0]);
 						} catch (e) {
-							msg = "Couldn't parse received error: " + JSON.stringify(e);
+							msg = `Couldn't parse received error: ${JSON.stringify(e)}`;
 						}
 
 						r.raiseError(msg);
