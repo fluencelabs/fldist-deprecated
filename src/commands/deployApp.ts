@@ -59,12 +59,12 @@ const appConfigSchema = Joi.object({
 	scripts: Joi.object({}) //
 		.unknown(true)
 		.pattern(identifierPattern, scriptsSchema)
-		.optional(),
+		.required(),
 
 	script_storage: Joi.object({}) //
 		.unknown(true)
 		.pattern(identifierPattern, scriptStorageSchema)
-		.optional(),
+		.required(),
 });
 
 const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): Promise<Buffer> => {
@@ -119,7 +119,7 @@ const deployApp = async (
 	const inputObj = JSON.parse(inputRaw);
 	const res = appConfigSchema.validate(inputObj);
 	if (res.error) {
-		console.log(res.error);
+		console.log(res.error.annotate());
 		return;
 	}
 
