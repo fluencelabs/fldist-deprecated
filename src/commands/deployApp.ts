@@ -63,17 +63,17 @@ const scriptsSchema = Joi.object({
 
 const appConfigSchema = Joi.object({
 	services: Joi.object({}) //
-		// .unknown(true)
+		.unknown(true)
 		.pattern(identifierPattern, serviceSchema)
 		.required(),
 
 	modules: Joi.object({}) //
-		// .unknown(true)
+		.unknown(true)
 		.pattern(identifierPattern, moduleSchema)
 		.required(),
 
 	scripts: Joi.object({}) //
-		// .unknown(true)
+		.unknown(true)
 		.pattern(identifierPattern, scriptsSchema)
 		.required(),
 
