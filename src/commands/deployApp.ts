@@ -8,7 +8,9 @@ import Handlebars from 'handlebars';
 import { Context } from 'src/types';
 import { createConfig, Distributor } from '../distributor';
 
-const identifierPattern = /'[\w][\d\w_]+'/;
+const identifierPattern = /^[A-Za-z][A-Za-z_0-9]+$/;
+
+const filePathPatterh = Joi.string();
 
 const node = Joi.string();
 
@@ -22,11 +24,25 @@ const moduleSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
 	config: Joi.object({
-		mapped_dirs: Joi.array().items(Joi.string()).optional(),
-		mounted_binaries: Joi.object().optional(),
-		preopened_files: Joi.object().optional(),
+		mapped_dirs: Joi.object() //
+			.unknown(true)
+			.pattern(filePathPatterh, filePathPatterh)
+			.optional(),
+
+		mounted_binaries: Joi.object() //
+			.optional(),
+
+		preopened_files: Joi.array() //
+			.items(filePathPatterh)
+			.optional(),
+
+		mem_pages_count: Joi.number().optional(),
+
+		name: Joi.string().optional(),
 	}),
-}).unknown(false);
+})
+	.or('file', 'url')
+	.unknown(false);
 
 const scriptStorageSchema = Joi.object({
 	file: Joi.string(),
@@ -47,17 +63,17 @@ const scriptsSchema = Joi.object({
 
 const appConfigSchema = Joi.object({
 	services: Joi.object({}) //
-		.unknown(true)
+		// .unknown(true)
 		.pattern(identifierPattern, serviceSchema)
 		.required(),
 
 	modules: Joi.object({}) //
-		.unknown(true)
+		// .unknown(true)
 		.pattern(identifierPattern, moduleSchema)
 		.required(),
 
 	scripts: Joi.object({}) //
-		.unknown(true)
+		// .unknown(true)
 		.pattern(identifierPattern, scriptsSchema)
 		.required(),
 
