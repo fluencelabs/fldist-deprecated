@@ -8,7 +8,9 @@ import Handlebars from 'handlebars';
 import { Context } from 'src/types';
 import { createConfig, Distributor } from '../distributor';
 
-const identifierPattern = /'[\w][\d\w_]+'/;
+const identifierPattern = /^[A-Za-z][A-Za-z_0-9]+$/;
+
+const filePathPatterh = Joi.string();
 
 const node = Joi.string();
 
@@ -16,30 +18,48 @@ const serviceSchema = Joi.object({
 	alias: Joi.string().optional(),
 	node: node.required(),
 	dependencies: Joi.array().items(Joi.string()).default([]),
-});
+}).unknown(false);
 
 const moduleSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
 	config: Joi.object({
-		mapped_dirs: Joi.array().items(Joi.string()).optional(),
-		mounted_binaries: Joi.object().optional(),
-		preopened_files: Joi.object().optional(),
+		mapped_dirs: Joi.object() //
+			.unknown(true)
+			.pattern(filePathPatterh, filePathPatterh)
+			.optional(),
+
+		mounted_binaries: Joi.object() //
+			.optional(),
+
+		preopened_files: Joi.array() //
+			.items(filePathPatterh)
+			.optional(),
+
+		mem_pages_count: Joi.number().optional(),
+
+		name: Joi.string().optional(),
 	}),
-});
+})
+	.or('file', 'url')
+	.unknown(false);
 
 const scriptStorageSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
 	node: node.required(),
 	interval: Joi.number().min(3).optional().default(3),
-}).or('file', 'url');
+})
+	.or('file', 'url')
+	.unknown(false);
 
 const scriptsSchema = Joi.object({
 	file: Joi.string(),
 	url: Joi.string().uri(),
 	variables: Joi.object().optional(),
-}).or('file', 'url');
+})
+	.or('file', 'url')
+	.unknown(false);
 
 const appConfigSchema = Joi.object({
 	services: Joi.object({}) //
@@ -55,12 +75,12 @@ const appConfigSchema = Joi.object({
 	scripts: Joi.object({}) //
 		.unknown(true)
 		.pattern(identifierPattern, scriptsSchema)
-		.optional(),
+		.required(),
 
 	script_storage: Joi.object({}) //
 		.unknown(true)
 		.pattern(identifierPattern, scriptStorageSchema)
-		.optional(),
+		.required(),
 });
 
 const load = async (fileOrUrl: { file?: string; root?: string; url?: string }): Promise<Buffer> => {
@@ -115,17 +135,22 @@ const deployApp = async (
 	const inputObj = JSON.parse(inputRaw);
 	const res = appConfigSchema.validate(inputObj);
 	if (res.error) {
-		console.log(res.error);
+		console.log(res.error.annotate());
 		return;
 	}
 
 	const value = res.value;
 
-	for (const [key, service] of Object.entries<any>(value.services)) {
+	const services = value.services;
+	const modules = value.modules;
+	const scripts = value.scripts || {};
+	const scriptStorageScripts = value.script_storage || {};
+
+	for (const [key, service] of Object.entries<any>(services)) {
 		console.log('Loading dependencies for service: ', key);
 		service.hashDependencies = [];
 		for (const depName of service.dependencies) {
-			const module = value.modules[depName];
+			const module = modules[depName];
 			if (!module) {
 				throw new Error(`Couldn't find module ${depName} for service, ${key}`);
 			}
@@ -165,13 +190,13 @@ const deployApp = async (
 
 	console.log('Preparing variables...');
 	const variables: Record<string, any> = {};
-	for (const key of Object.keys(value.services)) {
-		variables[key] = value.services[key].id;
-		variables[`${key}__node`] = value.services[key].node;
+	for (const key of Object.keys(services)) {
+		variables[key] = services[key].id;
+		variables[`${key}__node`] = services[key].node;
 	}
 	console.log(variables);
 
-	for (const [key, script] of Object.entries<any>(value.scripts)) {
+	for (const [key, script] of Object.entries<any>(scripts)) {
 		console.log('Running script: ', key);
 
 		const data = await load({ file: script.file, url: script.url, root: root });
@@ -195,7 +220,7 @@ const deployApp = async (
 		await promise;
 	}
 
-	for (const [key, script] of Object.entries<any>(value.script_storage)) {
+	for (const [key, script] of Object.entries<any>(scriptStorageScripts)) {
 		console.log('Adding script to script_storage: ', key);
 
 		const data = await load({ file: script.file, url: script.url, root: root });

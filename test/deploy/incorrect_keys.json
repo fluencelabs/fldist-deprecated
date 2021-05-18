@@ -1,0 +1,29 @@
+{
+	"services": {
+		"main": {
+			"dependencies": ["sqlite3", "service"],
+			"node": "12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3"
+		}
+	},
+	"modules": {
+		"service": {
+			"file": "../server/artifacts/service.wasm",
+			"config": {
+				"name": "service"
+			}
+		},
+		"sqlite3": {
+			"file": "../server/artifacts/sqlite3.wasm",
+			"config": {
+				"name": "sqlite3",
+				"mem_pages_count": 50,
+				"preopened_files": ["/tmp"],
+				"mapped_dirs": {
+					"tmp": "/tmp"
+				}
+			}
+		},
+		"scripts": {},
+		"script_storage": {}
+	}
+}
