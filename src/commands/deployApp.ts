@@ -205,7 +205,6 @@ const deployApp = async (
 		const vars = {
 			...variables,
 			...script.variables,
-			node: script.node,
 		};
 
 		const [_particle, promise] = await distributor.doRunAir(
