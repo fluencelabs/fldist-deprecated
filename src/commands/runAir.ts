@@ -46,7 +46,8 @@ export default {
 			})
 			.coerce('data', (arg) => {
 				return JSON.parse(arg);
-			});
+			})
+			.conflicts('data', 'f');
 	},
 	handler: async (argv): Promise<void> => {
 		const distributor: Distributor = await argv.getDistributor();
@@ -54,7 +55,7 @@ export default {
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');
 
-		if ((argv.data || !argv.f) && (!argv.data || argv.f)) {
+		if (!argv.data && !argv.f) {
 			console.error("pass either f or data argument")
 			process.exit(0);
 		}
