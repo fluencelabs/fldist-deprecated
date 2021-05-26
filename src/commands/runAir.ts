@@ -15,9 +15,13 @@ export default {
 			})
 			.option('d', {
 				alias: 'data',
-				demandOption: true,
-				default: '{}',
+				demandOption: false,
 				describe: 'Data for air script in json',
+				type: 'string',
+			})
+			.option('f', {
+				demandOption: false,
+				describe: 'Path to data for air script',
 				type: 'string',
 			})
 			.option('w', {
@@ -42,13 +46,27 @@ export default {
 			})
 			.coerce('data', (arg) => {
 				return JSON.parse(arg);
-			});
+			})
+			.conflicts('data', 'f');
 	},
 	handler: async (argv): Promise<void> => {
 		const distributor: Distributor = await argv.getDistributor();
 
 		const fileData = await fs.readFile(argv.path);
 		const air = fileData.toString('utf-8');
+
+		if (!argv.data && !argv.f) {
+			console.error("pass either f or data argument")
+			process.exit(0);
+		}
+
+		let data;
+		if (!argv.f) {
+			data = argv.data;
+		} else {
+			const fileData = await fs.readFile(argv.f);
+			data = JSON.parse(fileData.toString('utf-8'));
+		}
 
 		const callback = (args, tetraplets) => {
 			const strResult = JSON.stringify(args, undefined, 2);
@@ -68,7 +86,7 @@ export default {
 			argv.generated,
 			air,
 			callback,
-			argv.data,
+			data,
 			argv.wait,
 		);
 		if (argv.wait && argv.verbose) {
