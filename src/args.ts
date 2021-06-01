@@ -184,8 +184,8 @@ export function args() {
 			describe: 'Client seed',
 			type: 'string',
 		})
-		.option('p', {
-			alias: ['sk', 'secret-key'],
+		.option('sk', {
+			alias: ['secret-key'],
 			demandOption: false,
 			describe: 'Client\'s ed25519 private key in base64 (32 byte)',
 			type: 'string',
