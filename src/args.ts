@@ -1,6 +1,6 @@
 import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
-import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
+import { generatePeerId, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
 import {testNet, dev, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
 import * as PeerId from 'peer-id';
