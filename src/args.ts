@@ -4,8 +4,8 @@ import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluenc
 import {testNet, dev, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
 import * as PeerId from 'peer-id';
-import {keys} from 'libp2p-crypto';
 import * as base64 from 'base64-js';
+import {keys} from 'libp2p-crypto';
 
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
