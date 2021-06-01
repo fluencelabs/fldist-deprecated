@@ -68,6 +68,7 @@ export function args() {
 					argv.peerId = await PeerId.createFromPrivKey(protobuf);
 				} catch (e) {
 					console.error("pk should be base64 encoding of secret and public keys concatenated");
+					throw e;
 				}
 			} else if (isString(argv.seed)) {
 				argv.peerId = await seedToPeerId(argv.seed);
