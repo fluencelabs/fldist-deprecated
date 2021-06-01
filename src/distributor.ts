@@ -85,23 +85,16 @@ export class Distributor {
 	ttl: number;
 
 	static create = async (context: Context): Promise<Distributor> => {
-		let peerId;
-		let seed = context.seed;
-		if (seed) {
-			peerId = await seedToPeerId(seed);
-		} else {
-			peerId = await generatePeerId();
-			seed = peerIdToSeed(peerId);
-		}
+		let seed = peerIdToSeed(context.peerId);
 
 		if (context.verbose) {
 			console.log(`client seed: ${seed}`);
-			console.log(`client peerId: ${peerId.toB58String()}`);
+			console.log(`client peerId: ${context.peerId.toB58String()}`);
 			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
 		try {
-			const client = await createClient(context.relay, context.seed);
+			const client = await createClient(context.relay, seed);
 			return new Distributor(context.nodes, context.ttl, client);
 		} catch (e) {
 			console.log(typeof e);

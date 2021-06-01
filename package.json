@@ -65,7 +65,8 @@
 		"loglevel": "^1.7.1",
 		"promise-retry": "^2.0.1",
 		"uuid": "8.3.0",
-		"yargs": "^16.2.0"
+		"yargs": "^16.2.0",
+		"noble-ed25519": "^1.2.3"
 	},
 	"description": "Can distribute modules, blueprints and create services.",
 	"bugs": {

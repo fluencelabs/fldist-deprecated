@@ -1,4 +1,5 @@
 import { Node } from '@fluencelabs/fluence-network-environment';
+import * as PeerId from 'peer-id';
 
 export type Env = 'dev' | 'testnet' | 'local' | 'stage' | 'krasnodar';
 
@@ -7,6 +8,6 @@ export interface Context {
 	relay: Node;
 	env: Env;
 	ttl: number;
-	seed: string;
+	peerId: PeerId;
 	verbose: boolean;
 }
