@@ -3,6 +3,9 @@ import yargs, { Arguments } from 'yargs';
 import { generatePeerId, peerIdToSeed, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
 import {testNet, dev, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
+import * as PeerId from 'peer-id';
+import {keys} from 'libp2p-crypto';
+import * as base64 from 'base64-js';
 
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
@@ -57,14 +60,20 @@ export function args() {
 		.demandCommand()
 		.strict()
 		.middleware(async (argv) => {
-			const seed = argv.seed as string;
-			if (seed) {
-				// throws errors here
-				await seedToPeerId(seed);
-				return;
+			if (isString(argv.pk)) {
+				try {
+					let bytes = base64.toByteArray(argv.pk);
+					let privateKey = await keys.supportedKeys.ed25519.unmarshalEd25519PrivateKey(bytes);
+					let protobuf = keys.marshalPrivateKey(privateKey);
+					argv.peerId = await PeerId.createFromPrivKey(protobuf);
+				} catch (e) {
+					console.error("pk should be base64 encoding of secret and public keys concatenated");
+				}
+			} else if (isString(argv.seed)) {
+				argv.peerId = await seedToPeerId(argv.seed);
+			} else {
+				argv.peerId = await generatePeerId()
 			}
-			const peerId = await generatePeerId();
-			argv.seed = peerIdToSeed(peerId);
 		})
 		.middleware((argv) => {
 			const logLevel = argv.log as LogLevelDesc;
@@ -133,10 +142,11 @@ export function args() {
 			}
 
 			const ttl = argv.ttl as number;
+
 			const context: Context = {
 				nodes: nodes,
 				relay: node || nodes[DEFAULT_NODE_IDX] || nodes[0],
-				seed: argv.seed as string,
+				peerId: argv.peerId as PeerId,
 				env: env,
 				ttl: ttl,
 				verbose: argv.verbose as boolean,
@@ -164,6 +174,13 @@ export function args() {
 			describe: 'Client seed',
 			type: 'string',
 		})
+		.option('p', {
+			alias: ['pk', 'private-key'],
+			demandOption: false,
+			describe: 'Client\'s private key. base64 of private and public keys concatenated',
+			type: 'string',
+		})
+		.conflicts('pk', 'seed')
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',
