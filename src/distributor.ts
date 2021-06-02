@@ -317,6 +317,13 @@ export class Distributor {
 						}
 					});
 
+					h.onEvent('callbackSrv', 'response', (args, tetraplets) => {
+						callback(args, tetraplets);
+						if (!multipleResults) {
+							resolve();
+						}
+					});
+
 					h.onEvent('errorHandlingSrv', 'error', (args) => {
 						let msg;
 						try {
