@@ -14,10 +14,8 @@ import {
 	createClient,
 } from '@fluencelabs/fluence';
 import { Node } from '@fluencelabs/fluence-network-environment';
-import { RequestFlowBuilder } from '@fluencelabs/fluence/dist/api.unstable';
+import { RequestFlowBuilder, ResultCodes } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
-import { ResultCodes } from '@fluencelabs/fluence/dist/internal/commonTypes';
-import { VersionIncompatibleError } from '@fluencelabs/fluence/dist/internal/FluenceConnection';
 import { Context } from './types';
 
 export type Module = {
@@ -85,7 +83,7 @@ export class Distributor {
 	ttl: number;
 
 	static create = async (context: Context): Promise<Distributor> => {
-		let seed = peerIdToSeed(context.peerId);
+		const seed = peerIdToSeed(context.peerId);
 
 		if (context.verbose) {
 			console.log(`client seed: ${seed}`);
@@ -93,19 +91,8 @@ export class Distributor {
 			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
-		try {
-			const client = await createClient(context.relay, seed);
-			return new Distributor(context.nodes, context.ttl, client);
-		} catch (e) {
-			console.log(typeof e);
-			if (e instanceof VersionIncompatibleError) {
-				throw new Error(
-					'Current version of fldist is incompatible with the connected Fluence node. Please update fldist',
-				);
-			} else {
-				throw e;
-			}
-		}
+		const client = await createClient(context.relay, seed);
+		return new Distributor(context.nodes, context.ttl, client);
 	};
 
 	constructor(nodes: Node[], ttl: number, client: FluenceClient) {
@@ -247,7 +234,7 @@ export class Distributor {
 	}
 
 	monitor() {
-		this.client.aquaCallHandler.use((req, res, next) => {
+		this.client.callServiceHandler.use((req, res, next) => {
 			console.log('received call with params: ', {
 				fnName: req.fnName,
 				serviceId: req.serviceId,
