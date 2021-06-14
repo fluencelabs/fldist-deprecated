@@ -15,7 +15,6 @@ const filePathPatterh = Joi.string();
 const node = Joi.string();
 
 const serviceSchema = Joi.object({
-	alias: Joi.string().optional(),
 	node: node.required(),
 	dependencies: Joi.array().items(Joi.string()).default([]),
 }).unknown(false);
