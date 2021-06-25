@@ -338,14 +338,18 @@ export class Distributor {
 		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
+		let variables = data || new Map();
+		if (this.client.relayPeerId !== undefined) {
+			variables['relay'] = this.client.relayPeerId;
+		}
+
 		let request;
 		const operationPromise = new Promise<void>((resolve, reject) => {
 			const b = new RequestFlowBuilder()
 				.withTTL(this.ttl)
 				.withRawScript(air)
-				.withVariable('relay', this.client.relayPeerId)
 				.withVariable('returnService', 'returnService')
-				.withVariables(data || new Map())
+				.withVariables(variables)
 				.configHandler((h) => {
 					h.onEvent('returnService', 'run', (args, tetraplets) => {
 						callback(args, tetraplets);
