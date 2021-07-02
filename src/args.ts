@@ -1,7 +1,7 @@
 import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
 import { generatePeerId, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
-import {testNet, dev, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
+import {testNet, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
 import * as PeerId from 'peer-id';
 import * as base64 from 'base64-js';
@@ -95,9 +95,6 @@ export function args() {
 			switch (env) {
 				case 'local':
 					nodes = local;
-					break;
-				case 'dev':
-					nodes = dev;
 					break;
 				case 'testnet':
 					nodes = testNet;
@@ -194,7 +191,7 @@ export function args() {
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',
-			choices: ['krasnodar', 'local', 'testnet', 'stage', 'dev'],
+			choices: ['krasnodar', 'local', 'testnet', 'stage'],
 			default: 'krasnodar',
 		})
 		.option('node-id', {

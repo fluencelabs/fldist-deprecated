@@ -38,7 +38,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -121,7 +121,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -158,7 +158,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -187,7 +187,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -216,7 +216,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -246,7 +246,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -276,7 +276,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -305,7 +305,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -337,7 +337,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -368,7 +368,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level
@@ -401,7 +401,7 @@ Options:
                                                       [boolean] [default: false]
   -s, --seed              Client seed                                   [string]
       --env               Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node   PeerId of the node to use
       --node-addr         Multiaddr of the node to use
       --log               log level
@@ -436,7 +436,7 @@ Options:
       --version          Show version number                           [boolean]
   -s, --seed             Client seed                                    [string]
       --env              Environment to use
-            [required] [choices: "dev", "testnet", "local"] [default: "testnet"]
+            [required] [choices: "testnet", "local"] [default: "testnet"]
       --node-id, --node  PeerId of the node to use
       --node-addr        Multiaddr of the node to use
       --log              log level

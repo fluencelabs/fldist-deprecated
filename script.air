@@ -1,0 +1,7 @@
+(xor
+    (seq
+        (call relay (service_id "return_if") ["hello" one] result)
+        (call %init_peer_id% (returnService "run") [one result])
+    )
+    (call %init_peer_id% (returnService "run") [one %last_error%])
+)
