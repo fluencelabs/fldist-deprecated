@@ -312,13 +312,7 @@ export class Distributor {
 					});
 
 					h.onEvent('errorHandlingSrv', 'error', (args) => {
-						let msg;
-						try {
-							msg = JSON.parse(args[0]);
-						} catch (e) {
-							msg = `Couldn't parse received error ${JSON.stringify(args[0])}: ${JSON.stringify(e)}`;
-						}
-
+						let msg = args[0];
 						r.raiseError(msg);
 					});
 				})
