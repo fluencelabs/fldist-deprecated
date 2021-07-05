@@ -316,7 +316,7 @@ export class Distributor {
 						try {
 							msg = JSON.parse(args[0]);
 						} catch (e) {
-							msg = `Couldn't parse received error: ${JSON.stringify(e)}`;
+							msg = `Couldn't parse received error ${JSON.stringify(args[0])}: ${JSON.stringify(e)}`;
 						}
 
 						r.raiseError(msg);
