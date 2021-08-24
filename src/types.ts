@@ -1,7 +1,7 @@
 import { Node } from '@fluencelabs/fluence-network-environment';
 import * as PeerId from 'peer-id';
 
-export type Env = 'testnet' | 'local' | 'stage' | 'krasnodar';
+export type Env = 'testnet' | 'stage' | 'krasnodar';
 
 export interface Context {
 	nodes: Node[];

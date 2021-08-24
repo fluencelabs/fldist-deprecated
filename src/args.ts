@@ -42,16 +42,6 @@ function maybeString(argv: Arguments<Record<string, unknown>>, key: string): str
 	return undefined;
 }
 
-/* to run node in the local docker container
-docker run --rm -e RUST_LOG="info" -p 1210:1210 -p 4310:4310 fluencelabs/fluence -t 1210 -w 4310 -k gKdiCSUr1TFGFEgu2t8Ch1XEUsrN5A2UfBLjSZvfci9SPR3NvZpACfcpPGC3eY4zma1pk7UvYv5zb1VjvPHwCjj
-*/
-const local = [
-	{
-		multiaddr: '/ip4/127.0.0.1/tcp/4310/ws/p2p/12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3',
-		peerId: '12D3KooWKEprYXUXqoV5xSBeyqrWLpQLLH4PXfvVkDJtmcqmh5V3',
-	},
-];
-
 export function args() {
 	return yargs(hideBin(process.argv))
 		.usage('Usage: $0 <cmd> [options]') // usage string of application.
@@ -93,9 +83,6 @@ export function args() {
 			const env = argv.env as Env;
 			let nodes;
 			switch (env) {
-				case 'local':
-					nodes = local;
-					break;
 				case 'testnet':
 					nodes = testNet;
 					break;
@@ -191,7 +178,7 @@ export function args() {
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',
-			choices: ['krasnodar', 'local', 'testnet', 'stage'],
+			choices: ['krasnodar', 'testnet', 'stage'],
 			default: 'krasnodar',
 		})
 		.option('node-id', {
