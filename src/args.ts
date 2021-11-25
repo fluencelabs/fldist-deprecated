@@ -1,12 +1,10 @@
 import log, { LogLevelDesc } from 'loglevel';
 import yargs, { Arguments } from 'yargs';
-import { generatePeerId, seedToPeerId, setLogLevel } from '@fluencelabs/fluence';
-import {testNet, Node, stage, krasnodar} from '@fluencelabs/fluence-network-environment';
+import { KeyPair, setLogLevel } from '@fluencelabs/fluence';
+import { testNet, Node, stage, krasnodar } from '@fluencelabs/fluence-network-environment';
 import { hideBin } from 'yargs/helpers';
 import * as PeerId from 'peer-id';
 import * as base64 from 'base64-js';
-import {keys} from 'libp2p-crypto';
-import * as ed from 'noble-ed25519';
 
 import deployApp from './commands/deployApp';
 import upload from './commands/upload';
@@ -54,26 +52,17 @@ export function args() {
 			if (isString(argv.sk)) {
 				try {
 					// deserialize secret key from base64
-					let bytes = base64.toByteArray(argv.sk);
-					// calculate ed25519 public key
-					let publicKey = await ed.getPublicKey(bytes);
-					// concatenate secret + public because that's what libp2p-crypto expects
-					let sk_pk = new Uint8Array([...bytes, ...publicKey]);
-					// deserialize keys.supportedKeys.Ed25519PrivateKey
-					let privateKey = await keys.supportedKeys.ed25519.unmarshalEd25519PrivateKey(sk_pk);
-					// serialize it to protobuf encoding because that's what PeerId expects
-					let protobuf = keys.marshalPrivateKey(privateKey);
-					// deserialize PeerId from protobuf encoding
-					argv.peerId = await PeerId.createFromPrivKey(protobuf);
+					const bytes = base64.toByteArray(argv.sk);
+					argv.keypair = KeyPair.fromEd25519SK(bytes);
 				} catch (e) {
-					console.error("pk should be base64 encoding of secret and public keys concatenated");
+					console.error('pk should be base64 encoding of secret and public keys concatenated');
 					throw e;
 				}
-			} else if (isString(argv.seed)) {
-				argv.peerId = await seedToPeerId(argv.seed);
 			} else {
-				argv.peerId = await generatePeerId()
+				argv.keypair = KeyPair.randomEd25519();
 			}
+
+			argv.peerId = (argv.keypair as KeyPair).Libp2pPeerId;
 		})
 		.middleware((argv) => {
 			const logLevel = argv.log as LogLevelDesc;
@@ -144,6 +133,7 @@ export function args() {
 				env: env,
 				ttl: ttl,
 				verbose: argv.verbose as boolean,
+				keypair: argv.keypair as KeyPair,
 			};
 			argv.context = context;
 		})
@@ -162,19 +152,12 @@ export function args() {
 			type: 'boolean',
 			default: false,
 		})
-		.option('s', {
-			alias: 'seed',
-			demandOption: false,
-			describe: 'Client seed',
-			type: 'string',
-		})
 		.option('sk', {
 			alias: ['secret-key'],
 			demandOption: false,
-			describe: 'Client\'s ed25519 private key in base64 (32 byte)',
+			describe: "Client's ed25519 private key in base64 (32 byte)",
 			type: 'string',
 		})
-		.conflicts('sk', 'seed')
 		.option('env', {
 			demandOption: true,
 			describe: 'Environment to use',

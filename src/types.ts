@@ -1,3 +1,4 @@
+import { KeyPair } from '@fluencelabs/fluence';
 import { Node } from '@fluencelabs/fluence-network-environment';
 import * as PeerId from 'peer-id';
 
@@ -9,5 +10,6 @@ export interface Context {
 	env: Env;
 	ttl: number;
 	peerId: PeerId;
+	keypair: KeyPair;
 	verbose: boolean;
 }

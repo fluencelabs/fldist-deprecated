@@ -1,4 +1,5 @@
-import { generatePeerId, peerIdToSeed } from '@fluencelabs/fluence';
+import { KeyPair } from '@fluencelabs/fluence';
+import * as base64 from 'base64-js';
 
 export default {
 	command: 'create_keypair',
@@ -7,10 +8,11 @@ export default {
 		return yargs;
 	},
 	handler: async (_): Promise<void> => {
-		const peerId = await generatePeerId();
+		const keypair = await KeyPair.randomEd25519();
 		console.log({
-			...peerId.toJSON(),
-			seed: peerIdToSeed(peerId),
+			peerId: keypair.Libp2pPeerId.toB58String(),
+			secretKey: base64.fromByteArray(keypair.toEd25519PrivateKey()),
+			publicKey: base64.fromByteArray(keypair.Libp2pPeerId.pubKey.bytes),
 		});
 		process.exit(0);
 	},

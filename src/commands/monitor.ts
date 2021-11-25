@@ -8,6 +8,6 @@ export default {
 		argv.context.verbose = true;
 		const distributor: Distributor = await argv.getDistributor();
 		console.log('Waiting for external particles. Press ctr+c to exit');
-		distributor.monitor();
+		// distributor.monitor();
 	},
 };

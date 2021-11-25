@@ -1,20 +1,7 @@
 import log from 'loglevel';
 import { promises as fs } from 'fs';
-import {
-	addBlueprint,
-	createService as fluenceCreateService,
-	generatePeerId,
-	getInterfaces as getInter,
-	getModules as getMod,
-	Particle,
-	peerIdToSeed,
-	seedToPeerId,
-	sendParticleAsFetch,
-	FluenceClient,
-	createClient,
-} from '@fluencelabs/fluence';
+import { FluencePeer, KeyPair } from '@fluencelabs/fluence';
 import { Node } from '@fluencelabs/fluence-network-environment';
-import { RequestFlowBuilder, ResultCodes } from '@fluencelabs/fluence/dist/api.unstable';
 import { ModuleConfig } from '@fluencelabs/fluence/dist/internal/moduleConfig';
 import { Context } from './types';
 
@@ -78,24 +65,23 @@ export class Distributor {
 
 	modules: Module[];
 
-	client: FluenceClient;
+	client: FluencePeer;
 
 	ttl: number;
 
 	static create = async (context: Context): Promise<Distributor> => {
-		const seed = peerIdToSeed(context.peerId);
-
 		if (context.verbose) {
-			console.log(`client seed: ${seed}`);
+			console.log(`client private key: ${context.keypair.Libp2pPeerId}`);
 			console.log(`client peerId: ${context.peerId.toB58String()}`);
 			console.log(`relay peerId: ${context.relay.peerId}`);
 		}
 
-		const client = await createClient(context.relay, seed);
+		const client = new FluencePeer();
+		await client.start({ connectTo: context.relay });
 		return new Distributor(context.nodes, context.ttl, client);
 	};
 
-	constructor(nodes: Node[], ttl: number, client: FluenceClient) {
+	constructor(nodes: Node[], ttl: number, client: FluencePeer) {
 		this.nodes = nodes;
 		this.ttl = ttl;
 		this.client = client;
@@ -136,118 +122,125 @@ export class Distributor {
 			return;
 		}
 
-		await this.client.disconnect();
+		await this.client.stop();
 	}
 
 	async uploadModuleToNode(node: string, module: Module): Promise<string> {
-		const [req, promise] = new RequestFlowBuilder()
-			.withRawScript(
-				`
-	(seq
-		(call init_relay ("op" "identity") [])
-		(seq
-			(call node ("dist" "add_module") [module_bytes module_config] result)
-			(seq 
-				(call init_relay ("op" "identity") [])
-        		(call %init_peer_id% ("callback" "callback") [result])
-			)
-		)
-    )`,
-			)
-			.withVariable('module_bytes', module.base64)
-			.withVariable('module_config', module.config)
-			.withVariable('node', node)
-			.withTTL(this.ttl)
-			.buildAsFetch<[string]>('callback', 'callback');
+		// 	const [req, promise] = new RequestFlowBuilder()
+		// 		.withRawScript(
+		// 			`
+		// (seq
+		// 	(call init_relay ("op" "identity") [])
+		// 	(seq
+		// 		(call node ("dist" "add_module") [module_bytes module_config] result)
+		// 		(seq
+		// 			(call init_relay ("op" "identity") [])
+		//     		(call %init_peer_id% ("callback" "callback") [result])
+		// 		)
+		// 	)
+		// )`,
+		// 		)
+		// 		.withVariable('module_bytes', module.base64)
+		// 		.withVariable('module_config', module.config)
+		// 		.withVariable('node', node)
+		// 		.withTTL(this.ttl)
+		// 		.buildAsFetch<[string]>('callback', 'callback');
 
-		await this.client.initiateFlow(req);
-		const [res] = await promise;
-		return res;
+		// 	await this.client.initiateFlow(req);
+		// 	const [res] = await promise;
+		// 	return res;
+		throw 'unimplemented';
 	}
 
 	async uploadBlueprint(node: string, bp: Blueprint): Promise<string> {
-		log.warn(`uploading blueprint ${bp.name} to node ${node} via client ${this.client.selfPeerId}`);
+		// log.warn(`uploading blueprint ${bp.name} to node ${node} via client ${this.client.selfPeerId}`);
 
-		return addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
+		// return addBlueprint(this.client, bp.name, bp.dependencies, undefined, node, this.ttl);
+		throw 'unimplemented';
 	}
 
 	async createService(node: string, bpId: string): Promise<string> {
-		return fluenceCreateService(this.client, bpId, node, this.ttl);
+		// return fluenceCreateService(this.client, bpId, node, this.ttl);
+		throw 'unimplemented';
 	}
 
 	async createAlias(node: string, serviceId: string, alias: string): Promise<void> {
-		const [request, promise] = new RequestFlowBuilder()
-			.withRawScript(
-				`
-        (seq
-			(call init_relay ("op" "identity") [])
-			(seq 
-				(call node ("srv" "add_alias") [alias serviceId])
-				(seq
-					(call init_relay ("op" "identity") [])
-					(call %init_peer_id% ("callback" "callback") [])
-				)
-			)
-        )
-    `,
-			)
-			.withVariable('node', node)
-			.withVariables({ alias, serviceId })
-			.buildAsFetch<void>('callback', 'callback');
+		// 	const [request, promise] = new RequestFlowBuilder()
+		// 		.withRawScript(
+		// 			`
+		//     (seq
+		// 		(call init_relay ("op" "identity") [])
+		// 		(seq
+		// 			(call node ("srv" "add_alias") [alias serviceId])
+		// 			(seq
+		// 				(call init_relay ("op" "identity") [])
+		// 				(call %init_peer_id% ("callback" "callback") [])
+		// 			)
+		// 		)
+		//     )
+		// `,
+		// 		)
+		// 		.withVariable('node', node)
+		// 		.withVariables({ alias, serviceId })
+		// 		.buildAsFetch<void>('callback', 'callback');
 
-		await this.client.initiateFlow(request);
-		return promise;
+		// 	await this.client.initiateFlow(request);
+		// 	return promise;
+		throw 'unimplemented';
 	}
 
 	async getModules(_node: string): Promise<string[]> {
-		return getMod(this.client, this.ttl);
+		// return getMod(this.client, this.ttl);
+		throw 'unimplemented';
 	}
 
 	async getInterfaces(_node: string): Promise<string[]> {
-		console.log(this.ttl);
-		return getInter(this.client, this.ttl);
+		// console.log(this.ttl);
+		// return getInter(this.client, this.ttl);
+		throw 'unimplemented';
 	}
 
 	async getInterface(serviceId: string, node: string): Promise<string[]> {
-		const callbackFn = 'getInterface';
-		const script = `
-            (seq
-				(call init_relay ("op" "identity") [])
-				(seq 
-                	(call node ("srv" "get_interface") [serviceId] interface)
-					(seq
-						(call init_relay ("op" "identity") [])
-                		(call myPeerId ("_callback" "${callbackFn}") [interface])
-					)
-				)
-            )
-        `;
-		const data = {
-			node: node,
-			myPeerId: this.client.selfPeerId,
-			serviceId: serviceId,
-		};
-		const particle = new Particle(script, data, this.ttl);
+		// const callbackFn = 'getInterface';
+		// const script = `
+		//     (seq
+		// 		(call init_relay ("op" "identity") [])
+		// 		(seq
+		//         	(call node ("srv" "get_interface") [serviceId] interface)
+		// 			(seq
+		// 				(call init_relay ("op" "identity") [])
+		//         		(call myPeerId ("_callback" "${callbackFn}") [interface])
+		// 			)
+		// 		)
+		//     )
+		// `;
+		// const data = {
+		// 	node: node,
+		// 	myPeerId: this.client.selfPeerId,
+		// 	serviceId: serviceId,
+		// };
+		// const particle = new Particle(script, data, this.ttl);
 
-		const [res] = await sendParticleAsFetch<[string[]]>(this.client, particle, callbackFn);
-		return res;
+		// const [res] = await sendParticleAsFetch<[string[]]>(this.client, particle, callbackFn);
+		// return res;
+		throw 'unimplemented';
 	}
 
-	monitor() {
-		this.client.callServiceHandler.use((req, res, next) => {
-			console.log('received call with params: ', {
-				fnName: req.fnName,
-				serviceId: req.serviceId,
-				args: req.args,
-				particleId: req.particleContext.particleId,
-			});
+	// monitor() {
+	// 	this.client.callServiceHandler.use((req, res, next) => {
+	// 		console.log('received call with params: ', {
+	// 			fnName: req.fnName,
+	// 			serviceId: req.serviceId,
+	// 			args: req.args,
+	// 			particleId: req.particleContext.particleId,
+	// 		});
 
-			res.retCode = 0;
-			res.result = {};
+	// 		res.retCode = 0;
+	// 		res.result = {};
 
-			next();
-		});
-	}
+	// 		next();
+	// 	});
+	// }
 
 	async doRunAir(
 		isGeneratedByAqua: boolean,
@@ -256,8 +249,9 @@ export class Distributor {
 		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
-		const fn = isGeneratedByAqua ? this.runAirAqua.bind(this) : this.runAir.bind(this);
-		return fn(air, callback, data, multipleResults);
+		// const fn = isGeneratedByAqua ? this.runAirAqua.bind(this) : this.runAir.bind(this);
+		// return fn(air, callback, data, multipleResults);
+		throw 'unimplemented';
 	}
 
 	// Run AIR script generated by Aqua Compiler
@@ -267,63 +261,64 @@ export class Distributor {
 		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
-		let request;
-		const operationPromise = new Promise<void>((resolve, reject) => {
-			const b = new RequestFlowBuilder()
-				.disableInjections()
-				.withTTL(this.ttl)
-				.withRawScript(air)
-				.configHandler((h, r) => {
-					// eslint-disable-next-line @typescript-eslint/ban-types
-					h.use((req, resp, next: Function) => {
-						// Process data loading call (getDataSrv) or trigger next handler
-						if (req.serviceId !== 'getDataSrv') {
-							next();
-							return;
-						}
+		// let request;
+		// const operationPromise = new Promise<void>((resolve, reject) => {
+		// 	const b = new RequestFlowBuilder()
+		// 		.disableInjections()
+		// 		.withTTL(this.ttl)
+		// 		.withRawScript(air)
+		// 		.configHandler((h, r) => {
+		// 			// eslint-disable-next-line @typescript-eslint/ban-types
+		// 			h.use((req, resp, next: Function) => {
+		// 				// Process data loading call (getDataSrv) or trigger next handler
+		// 				if (req.serviceId !== 'getDataSrv') {
+		// 					next();
+		// 					return;
+		// 				}
 
-						resp.result = `Couldn't load variable "${req.fnName}"`;
-						resp.retCode = ResultCodes.noServiceFound;
+		// 				resp.result = `Couldn't load variable "${req.fnName}"`;
+		// 				resp.retCode = ResultCodes.noServiceFound;
 
-						if (req.fnName === '-relay-') {
-							resp.result = this.client.relayPeerId!;
-							resp.retCode = ResultCodes.success;
-						}
+		// 				if (req.fnName === '-relay-') {
+		// 					resp.result = this.client.relayPeerId!;
+		// 					resp.retCode = ResultCodes.success;
+		// 				}
 
-						const valueFromData = data[req.fnName];
-						if (valueFromData !== undefined) {
-							resp.result = valueFromData;
-							resp.retCode = ResultCodes.success;
-						}
-					});
+		// 				const valueFromData = data[req.fnName];
+		// 				if (valueFromData !== undefined) {
+		// 					resp.result = valueFromData;
+		// 					resp.retCode = ResultCodes.success;
+		// 				}
+		// 			});
 
-					h.onEvent('returnService', 'run', (args, tetraplets) => {
-						callback(args, tetraplets);
-						if (!multipleResults) {
-							resolve();
-						}
-					});
+		// 			h.onEvent('returnService', 'run', (args, tetraplets) => {
+		// 				callback(args, tetraplets);
+		// 				if (!multipleResults) {
+		// 					resolve();
+		// 				}
+		// 			});
 
-					h.onEvent('callbackSrv', 'response', (args, tetraplets) => {
-						callback(args, tetraplets);
-						if (!multipleResults) {
-							resolve();
-						}
-					});
+		// 			h.onEvent('callbackSrv', 'response', (args, tetraplets) => {
+		// 				callback(args, tetraplets);
+		// 				if (!multipleResults) {
+		// 					resolve();
+		// 				}
+		// 			});
 
-					h.onEvent('errorHandlingSrv', 'error', (args) => {
-						let msg = args[0];
-						r.raiseError(msg);
-					});
-				})
-				.handleScriptError(reject)
-				.handleTimeout(multipleResults ? resolve : reject);
+		// 			h.onEvent('errorHandlingSrv', 'error', (args) => {
+		// 				const msg = args[0];
+		// 				r.raiseError(msg);
+		// 			});
+		// 		})
+		// 		.handleScriptError(reject)
+		// 		.handleTimeout(multipleResults ? resolve : reject);
 
-			request = b.build();
-		});
+		// 	request = b.build();
+		// });
 
-		await this.client.initiateFlow(request);
-		return [request.id, operationPromise];
+		// await this.client.initiateFlow(request);
+		// return [request.id, operationPromise];
+		throw 'unimplemented';
 	}
 
 	async runAir(
@@ -332,87 +327,91 @@ export class Distributor {
 		data: Record<string, any> = {},
 		multipleResults = false,
 	): Promise<[string, Promise<void>]> {
-		let variables = data || new Map();
-		if (this.client.relayPeerId !== undefined) {
-			variables['relay'] = this.client.relayPeerId;
-		}
+		// const variables = data || new Map();
+		// if (this.client.relayPeerId !== undefined) {
+		// 	variables.relay = this.client.relayPeerId;
+		// }
 
-		let request;
-		const operationPromise = new Promise<void>((resolve, reject) => {
-			const b = new RequestFlowBuilder()
-				.withTTL(this.ttl)
-				.withRawScript(air)
-				.withVariable('returnService', 'returnService')
-				.withVariables(variables)
-				.configHandler((h) => {
-					h.onEvent('returnService', 'run', (args, tetraplets) => {
-						callback(args, tetraplets);
-						if (!multipleResults) {
-							resolve();
-						}
-					});
-				})
-				.handleScriptError(reject)
-				.handleTimeout(multipleResults ? resolve : reject);
+		// let request;
+		// const operationPromise = new Promise<void>((resolve, reject) => {
+		// 	const b = new RequestFlowBuilder()
+		// 		.withTTL(this.ttl)
+		// 		.withRawScript(air)
+		// 		.withVariable('returnService', 'returnService')
+		// 		.withVariables(variables)
+		// 		.configHandler((h) => {
+		// 			h.onEvent('returnService', 'run', (args, tetraplets) => {
+		// 				callback(args, tetraplets);
+		// 				if (!multipleResults) {
+		// 					resolve();
+		// 				}
+		// 			});
+		// 		})
+		// 		.handleScriptError(reject)
+		// 		.handleTimeout(multipleResults ? resolve : reject);
 
-			request = b.build();
-		});
+		// 	request = b.build();
+		// });
 
-		await this.client.initiateFlow(request);
-		return [request.id, operationPromise];
+		// await this.client.initiateFlow(request);
+		// return [request.id, operationPromise];
+
+		throw 'unimplemented';
 	}
 
 	async addScript(node: string, script: string, interval?: number): Promise<string> {
-		const intervalToUse = interval || 3;
+		// 	const intervalToUse = interval || 3;
 
-		const [request, promise] = new RequestFlowBuilder()
-			.withRawScript(
-				`
-        (seq
-			(call init_relay ("op" "identity") [])
-			(seq
-				(call node ("script" "add") [script interval] result)
-				(seq
-					(call init_relay ("op" "identity") [])
-					(call %init_peer_id% ("callback" "callback") [result])
-				)
-			)
-        )
-    `,
-			)
-			.withVariable('node', node)
-			.withVariable('script', script)
-			.withVariable('interval', intervalToUse.toString())
-			.withTTL(this.ttl)
-			.buildAsFetch<[string]>('callback', 'callback');
+		// 	const [request, promise] = new RequestFlowBuilder()
+		// 		.withRawScript(
+		// 			`
+		//     (seq
+		// 		(call init_relay ("op" "identity") [])
+		// 		(seq
+		// 			(call node ("script" "add") [script interval] result)
+		// 			(seq
+		// 				(call init_relay ("op" "identity") [])
+		// 				(call %init_peer_id% ("callback" "callback") [result])
+		// 			)
+		// 		)
+		//     )
+		// `,
+		// 		)
+		// 		.withVariable('node', node)
+		// 		.withVariable('script', script)
+		// 		.withVariable('interval', intervalToUse.toString())
+		// 		.withTTL(this.ttl)
+		// 		.buildAsFetch<[string]>('callback', 'callback');
 
-		await this.client.initiateFlow(request);
-		const [res] = await promise;
-		return res;
+		// 	await this.client.initiateFlow(request);
+		// 	const [res] = await promise;
+		// 	return res;
+		throw 'unimplemented';
 	}
 
 	async removeScript(node: string, scriptId: string): Promise<void> {
-		const [request, promise] = new RequestFlowBuilder()
-			.withRawScript(
-				`
-        (seq
-			(call init_relay ("op" "identity") [])
-			(seq
-				(call node ("script" "remove") [scriptId])
-				(seq
-					(call init_relay ("op" "identity") [])
-					(call %init_peer_id% ("callback" "callback") [])
-				)
-			)
-        )
-    `,
-			)
-			.withVariable('node', node)
-			.withVariable('scriptId', scriptId)
-			.withTTL(this.ttl)
-			.buildAsFetch<[]>('callback', 'callback');
+		// 	const [request, promise] = new RequestFlowBuilder()
+		// 		.withRawScript(
+		// 			`
+		//     (seq
+		// 		(call init_relay ("op" "identity") [])
+		// 		(seq
+		// 			(call node ("script" "remove") [scriptId])
+		// 			(seq
+		// 				(call init_relay ("op" "identity") [])
+		// 				(call %init_peer_id% ("callback" "callback") [])
+		// 			)
+		// 		)
+		//     )
+		// `,
+		// 		)
+		// 		.withVariable('node', node)
+		// 		.withVariable('scriptId', scriptId)
+		// 		.withTTL(this.ttl)
+		// 		.buildAsFetch<[]>('callback', 'callback');
 
-		await this.client.initiateFlow(request);
-		await promise;
+		// 	await this.client.initiateFlow(request);
+		// 	await promise;
+		throw 'unimplemented';
 	}
 }
