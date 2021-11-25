@@ -53,16 +53,20 @@ export function args() {
 				try {
 					// deserialize secret key from base64
 					const bytes = base64.toByteArray(argv.sk);
-					argv.keypair = KeyPair.fromEd25519SK(bytes);
+					argv.keypair = await KeyPair.fromEd25519SK(bytes);
 				} catch (e) {
-					console.error('pk should be base64 encoding of secret and public keys concatenated');
-					throw e;
+					throw new Error(`Error while parsing --sk. Expected base64 of 32-byte Ed25519 private key. ${e}`);
 				}
 			} else {
-				argv.keypair = KeyPair.randomEd25519();
+				argv.keypair = await KeyPair.randomEd25519();
 			}
 
 			argv.peerId = (argv.keypair as KeyPair).Libp2pPeerId;
+			console.log({
+				peerId: (argv.keypair as KeyPair).Libp2pPeerId.toB58String(),
+				secretKey: base64.fromByteArray((argv.keypair as KeyPair).toEd25519PrivateKey()),
+				publicKey: base64.fromByteArray((argv.keypair as KeyPair).Libp2pPeerId.pubKey.bytes),
+			});
 		})
 		.middleware((argv) => {
 			const logLevel = argv.log as LogLevelDesc;
@@ -204,7 +208,6 @@ export function args() {
 			},
 		})
 		.fail((msg, err) => {
-			console.error('Something went wrong!');
 			if (msg) console.error(msg);
 			console.error(err);
 			process.exit(1);
