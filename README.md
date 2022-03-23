@@ -1,3 +1,9 @@
+# fldist is deprecated. Install aqua to work with aqua code and service management.
+# https://doc.fluence.dev/aqua-book/getting-started/installation
+
+
+
+
 # Fluence proto-distributor
 [![npm](https://img.shields.io/npm/v/@fluencelabs/fldist)](https://www.npmjs.com/package/@fluencelabs/fldist)
 
